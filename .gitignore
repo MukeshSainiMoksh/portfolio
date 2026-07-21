@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+.venv/
+venv/
+env/
+.env
+!backend/.env.example
+!frontend/admin/.env.example
+!frontend/website/.env.example
+backend/uploads/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.env.local
+.env*.local
+*.tsbuildinfo
+
+# Flutter / Dart (mobile)
+mobile/build/
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+*.iml
+
+# Claude Code
+.claude/
+CLAUDE.local.md
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.tmp
