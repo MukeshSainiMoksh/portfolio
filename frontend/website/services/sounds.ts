@@ -9,8 +9,25 @@ type AC = AudioContext;
 let _ctx: AC | null = null;
 let _vol = 0.52;
 
+const MUTE_KEY = "sfx_muted";
+let _muted =
+  typeof window !== "undefined" && localStorage.getItem(MUTE_KEY) === "1";
+
+export function isMuted(): boolean {
+  return _muted;
+}
+
+export function toggleMute(): boolean {
+  _muted = !_muted;
+  try {
+    localStorage.setItem(MUTE_KEY, _muted ? "1" : "0");
+  } catch { /* private mode etc. */ }
+  return _muted;
+}
+
 function getAC(): AC | null {
   if (typeof window === "undefined") return null;
+  if (_muted) return null; // every sfx method no-ops while muted
   try {
     if (!_ctx) {
       _ctx = new (window.AudioContext ||

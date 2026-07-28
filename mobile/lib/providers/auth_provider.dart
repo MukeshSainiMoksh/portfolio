@@ -36,15 +36,18 @@ class AuthState {
 
   bool get isAuthenticated => user != null;
 
+  static const _unset = Object();
+
+  // sentinel-based so callers can explicitly clear user/error back to null
   AuthState copyWith({
     bool? isLoading,
-    UserModel? user,
-    String? error,
+    Object? user = _unset,
+    Object? error = _unset,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
-      user: user ?? this.user,
-      error: error ?? this.error,
+      user: identical(user, _unset) ? this.user : user as UserModel?,
+      error: identical(error, _unset) ? this.error : error as String?,
     );
   }
 }
@@ -79,6 +82,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = AuthState(user: user);
     } on ApiException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
+    } catch (_) {
+      // last-resort guard so an unexpected error never crashes the login flow
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Login failed. Check your connection and try again.',
+      );
     }
   }
 

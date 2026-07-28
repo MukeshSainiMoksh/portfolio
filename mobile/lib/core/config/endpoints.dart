@@ -28,6 +28,16 @@ class Endpoints {
   static const String certifications = '/api/admin/certifications/';
   static String certificationById(int id) => '/api/admin/certifications/$id';
 
+  // Contact messages (inbox)
+  static const String contacts = '/api/admin/contacts/';
+  static const String contactsUnreadCount = '/api/admin/contacts/unread-count';
+  static String contactById(int id) => '/api/admin/contacts/$id';
+
+  // Site assets (resume + intro video)
+  static const String assets = '/api/admin/assets/';
+  static const String assetsResume = '/api/admin/assets/resume';
+  static const String assetsIntroVideo = '/api/admin/assets/intro-video';
+
   // Media
   static const String mediaFiles = '/api/admin/media/files';
   static const String mediaUpload = '/api/admin/media/upload';

@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getPortfolioData } from "@/services/api";
-
 interface Experience {
   id: number;
   job_title: string;
@@ -16,14 +13,7 @@ interface Experience {
   technologies: string | null;
 }
 
-export default function Experience() {
-  const [items, setItems] = useState<Experience[]>([]);
-
-  useEffect(() => {
-    getPortfolioData()
-      .then((data) => setItems(data.experience ?? []))
-      .catch(() => {});
-  }, []);
+export default function Experience({ items }: { items: Experience[] }) {
 
   return (
     <section id="experience" className="py-24" style={{ background: "#000510" }}>

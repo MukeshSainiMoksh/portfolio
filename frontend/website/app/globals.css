@@ -1,8 +1,9 @@
+/* @import must precede all other rules or browsers are allowed to ignore it */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Syne:wght@300;400;700;800&family=JetBrains+Mono:wght@300;400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Syne:wght@300;400;700;800&family=JetBrains+Mono:wght@300;400;700&display=swap');
 
 @layer base {
   * { box-sizing: border-box; }
@@ -432,4 +433,39 @@
   border-radius: 50%;
   background: #a855f7;
   box-shadow: 0 0 8px #a855f7, 0 0 16px rgba(168, 85, 247, 0.4);
+}
+
+/* ─── Accessibility: respect reduced-motion preference ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Accessibility: keyboard focus + skip link ────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(0, 245, 255, 0.75);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  top: -48px;
+  left: 16px;
+  z-index: 100;
+  padding: 10px 20px;
+  background: #000d1a;
+  border: 1px solid #00f5ff;
+  color: #00f5ff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: top 0.2s;
+}
+.skip-link:focus {
+  top: 12px;
 }

@@ -59,11 +59,5 @@ export interface PortfolioData {
   }>;
 }
 
-let portfolioCache: PortfolioData | null = null;
-
-export async function getPortfolioData(): Promise<PortfolioData> {
-  if (portfolioCache) return portfolioCache;
-  const res = await api.get<PortfolioData>("/api/website/content/portfolio");
-  portfolioCache = res.data;
-  return res.data;
-}
+// NOTE: portfolio data is now fetched server-side — see services/portfolio.ts.
+// This axios instance is only used for client-side POSTs (contact form).

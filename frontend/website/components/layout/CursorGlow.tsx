@@ -12,6 +12,12 @@ export default function CursorGlow() {
   const haloRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // skip entirely for reduced-motion users and touch-only devices
+    if (
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      !window.matchMedia("(hover: hover)").matches
+    ) return;
+
     let haloX = 0, haloY = 0;
     let curX  = 0, curY  = 0;
     let raf: number;

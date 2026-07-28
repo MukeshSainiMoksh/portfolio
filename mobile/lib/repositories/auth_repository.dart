@@ -24,9 +24,7 @@ class AuthRepository {
       await _storage.saveUsername(username);
       return token;
     } on DioException catch (e) {
-      if (e.error is ApiException) {
-        rethrow;
-      }
+      // always throw the unwrapped ApiException — callers catch on ApiException
       throw _handleError(e);
     }
   }
@@ -36,9 +34,6 @@ class AuthRepository {
       final response = await _client.dio.get(Endpoints.me);
       return UserModel.fromJson(response.data);
     } on DioException catch (e) {
-      if (e.error is ApiException) {
-        rethrow;
-      }
       throw _handleError(e);
     }
   }

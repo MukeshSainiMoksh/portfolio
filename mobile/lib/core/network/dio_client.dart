@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../config/app_config.dart';
 import '../storage/secure_storage.dart';
 import 'auth_interceptor.dart';
@@ -24,11 +25,14 @@ class DioClient {
     _dio.interceptors.addAll([
       AuthInterceptor(storage),
       ErrorInterceptor(),
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        logPrint: (obj) => print(obj),
-      ),
+      // Debug builds only — release must never log request/response bodies
+      // (login carries credentials, every call carries the bearer token)
+      if (kDebugMode)
+        LogInterceptor(
+          requestBody: false,
+          responseBody: false,
+          logPrint: (obj) => debugPrint(obj.toString()),
+        ),
     ]);
   }
 

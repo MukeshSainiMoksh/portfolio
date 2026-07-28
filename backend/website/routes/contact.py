@@ -2,18 +2,27 @@
 Website Contact API Routes
 """
 
+import logging
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from core.email import send_contact_notification
+from core.ratelimit import rate_limit
 from website.schemas.contact import ContactFormData, ContactResponse
 from website.services.contact_service import ContactService
+
+logger = logging.getLogger("portfolio.contact")
 
 router = APIRouter()
 
 
-@router.post("/submit", response_model=ContactResponse)
+@router.post(
+    "/submit",
+    response_model=ContactResponse,
+    dependencies=[Depends(rate_limit("contact", max_requests=3, window_seconds=3600))],
+)
 async def submit_contact_form(
     contact_data: ContactFormData,
     background_tasks: BackgroundTasks,
@@ -39,7 +48,8 @@ async def submit_contact_form(
             contact_id=contact.id
         )
 
-    except Exception as e:
+    except Exception:
+        logger.exception("Contact form submission failed")
         raise HTTPException(
             status_code=500,
             detail="Failed to submit contact form. Please try again later."

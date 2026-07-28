@@ -23,6 +23,12 @@ class MediaFileUpdate(BaseModel):
     description: Optional[str] = None
 
 
+class BulkUploadResponse(BaseModel):
+    uploaded: list["MediaFileResponse"]
+    failed: list[str] = Field(default_factory=list)
+    message: str
+
+
 class MediaFileResponse(BaseModel):
     id: int
     filename: str           # UUID-based stored filename

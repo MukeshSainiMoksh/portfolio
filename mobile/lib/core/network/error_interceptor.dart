@@ -48,6 +48,19 @@ class ErrorInterceptor extends Interceptor {
           ),
         );
         break;
+      case 429:
+        // backend rate limiter (login: 5/min per IP) sends Retry-After
+        final retryAfter = err.response?.headers.value('retry-after');
+        final wait = retryAfter != null ? ' Try again in ${retryAfter}s.' : ' Try again later.';
+        handler.reject(
+          DioException(
+            requestOptions: err.requestOptions,
+            error: ApiException.rateLimited('Too many attempts.$wait'),
+            type: DioExceptionType.badResponse,
+            response: err.response,
+          ),
+        );
+        break;
       default:
         if (err.type == DioExceptionType.connectionTimeout ||
             err.type == DioExceptionType.receiveTimeout ||

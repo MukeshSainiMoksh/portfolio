@@ -2,27 +2,38 @@
 Admin Media Management Routes
 """
 
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from sqlalchemy.ext.asyncio import AsyncSession
-import os
+import logging
 import uuid
 from pathlib import Path
+from typing import List, Optional
+
+import aiofiles
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from core.security import get_current_admin_user
 from core.config import settings
-from admin.schemas.media import MediaFileResponse, MediaFileCreate
+from admin.schemas.media import BulkUploadResponse, MediaFileResponse, MediaFileCreate
 from admin.services.media_service import MediaService
+
+logger = logging.getLogger("portfolio.media")
 
 router = APIRouter()
 
 # Allowed file extensions
+# NOTE: .svg intentionally excluded — SVGs served from /uploads can contain
+# scripts (stored XSS). Re-add only with sanitization or attachment headers.
 ALLOWED_EXTENSIONS = {
-    'image': {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'},
+    'image': {'.jpg', '.jpeg', '.png', '.gif', '.webp'},
     'document': {'.pdf', '.doc', '.docx', '.txt'},
     'video': {'.mp4', '.avi', '.mov', '.wmv'},
 }
+
+ALL_ALLOWED = {ext for exts in ALLOWED_EXTENSIONS.values() for ext in exts}
+
+UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
+
 
 def get_file_type(filename: str) -> str:
     """Determine file type based on extension"""
@@ -33,9 +44,76 @@ def get_file_type(filename: str) -> str:
     return 'other'
 
 
+async def _save_upload(
+    file: UploadFile,
+    db: AsyncSession,
+    alt_text: str = "",
+    description: str = "",
+) -> MediaFileResponse:
+    """Validate, stream to disk, and create the DB record for one upload.
+
+    Raises HTTPException on validation failure; cleans up the file on DB failure.
+    """
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Missing filename")
+
+    file_ext = Path(file.filename).suffix.lower()
+    if file_ext not in ALL_ALLOWED:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File type not allowed. Allowed types: {', '.join(sorted(ALL_ALLOWED))}"
+        )
+
+    # client-declared size — quick reject; the real limit is enforced while streaming
+    if file.size is not None and file.size > settings.MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is {settings.MAX_FILE_SIZE / (1024*1024):.1f}MB"
+        )
+
+    filename = f"{uuid.uuid4()}{file_ext}"
+    file_path = Path(settings.UPLOAD_DIR) / filename
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    size = 0
+    try:
+        async with aiofiles.open(file_path, "wb") as out:
+            while chunk := await file.read(UPLOAD_CHUNK_SIZE):
+                size += len(chunk)
+                if size > settings.MAX_FILE_SIZE:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File too large. Maximum size is {settings.MAX_FILE_SIZE / (1024*1024):.1f}MB"
+                    )
+                await out.write(chunk)
+
+        media_service = MediaService(db)
+        media_data = MediaFileCreate(
+            filename=file.filename,
+            file_path=str(file_path),
+            file_url=f"/uploads/{filename}",
+            file_type=get_file_type(file.filename),
+            file_size=size,
+            mime_type=file.content_type,
+            alt_text=alt_text,
+            description=description,
+        )
+        return await media_service.create_media_file(media_data)
+
+    except HTTPException:
+        if file_path.exists():
+            file_path.unlink(missing_ok=True)
+        raise
+    except Exception:
+        logger.exception("Upload failed for %s", file.filename)
+        if file_path.exists():
+            file_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=500, detail="Upload failed")
+
+
 @router.get("/files", response_model=List[MediaFileResponse])
 async def get_media_files(
-    file_type: str = None,
+    file_type: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_admin_user)
 ):
@@ -53,60 +131,7 @@ async def upload_file(
     current_user = Depends(get_current_admin_user)
 ):
     """Upload a new media file"""
-    
-    # Validate file size
-    if file.size > settings.MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=413,
-            detail=f"File too large. Maximum size is {settings.MAX_FILE_SIZE / (1024*1024):.1f}MB"
-        )
-    
-    # Validate file extension
-    file_ext = Path(file.filename).suffix.lower()
-    all_allowed = set()
-    for extensions in ALLOWED_EXTENSIONS.values():
-        all_allowed.update(extensions)
-    
-    if file_ext not in all_allowed:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File type not allowed. Allowed types: {', '.join(all_allowed)}"
-        )
-    
-    # Generate unique filename
-    file_id = str(uuid.uuid4())
-    filename = f"{file_id}{file_ext}"
-    file_path = Path(settings.UPLOAD_DIR) / filename
-    
-    # Ensure upload directory exists
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    try:
-        # Save file
-        with open(file_path, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
-        
-        # Create database record
-        media_service = MediaService(db)
-        media_data = MediaFileCreate(
-            filename=file.filename,
-            file_path=str(file_path),
-            file_url=f"/uploads/{filename}",
-            file_type=get_file_type(file.filename),
-            file_size=file.size,
-            mime_type=file.content_type,
-            alt_text=alt_text,
-            description=description
-        )
-        
-        return await media_service.create_media_file(media_data)
-        
-    except Exception as e:
-        # Clean up file if database operation fails
-        if file_path.exists():
-            file_path.unlink()
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+    return await _save_upload(file, db, alt_text, description)
 
 
 @router.get("/files/{file_id}", response_model=MediaFileResponse)
@@ -147,95 +172,53 @@ async def delete_media_file(
 ):
     """Delete media file"""
     media_service = MediaService(db)
-    
+
     # Get file info before deletion
     media_file = await media_service.get_media_file(file_id)
     if not media_file:
         raise HTTPException(status_code=404, detail="Media file not found")
-    
+
     # Delete from database
     success = await media_service.delete_media_file(file_id)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete from database")
-    
+
     # Delete physical file
     try:
         file_path = Path(media_file.file_path)
         if file_path.exists():
             file_path.unlink()
-    except Exception as e:
-        # Log error but don't fail the request
-        print(f"Warning: Could not delete physical file {media_file.file_path}: {e}")
-    
+    except Exception:
+        logger.exception("Could not delete physical file %s", media_file.file_path)
+
     return {"message": "Media file deleted successfully"}
 
 
-@router.post("/bulk-upload", response_model=List[MediaFileResponse])
+@router.post("/bulk-upload", response_model=BulkUploadResponse)
 async def bulk_upload_files(
     files: List[UploadFile] = File(...),
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_admin_user)
 ):
     """Upload multiple files at once"""
-    
+
     if len(files) > 10:
         raise HTTPException(status_code=400, detail="Maximum 10 files allowed per bulk upload")
-    
-    uploaded_files = []
-    failed_files = []
-    
+
+    uploaded_files: List[MediaFileResponse] = []
+    failed_files: List[str] = []
+
     for file in files:
         try:
-            # Validate file size
-            if file.size > settings.MAX_FILE_SIZE:
-                failed_files.append(f"{file.filename}: File too large")
-                continue
-            
-            # Validate file extension
-            file_ext = Path(file.filename).suffix.lower()
-            all_allowed = set()
-            for extensions in ALLOWED_EXTENSIONS.values():
-                all_allowed.update(extensions)
-            
-            if file_ext not in all_allowed:
-                failed_files.append(f"{file.filename}: File type not allowed")
-                continue
-            
-            # Generate unique filename
-            file_id = str(uuid.uuid4())
-            filename = f"{file_id}{file_ext}"
-            file_path = Path(settings.UPLOAD_DIR) / filename
-            
-            # Save file
-            with open(file_path, "wb") as buffer:
-                content = await file.read()
-                buffer.write(content)
-            
-            # Create database record
-            media_service = MediaService(db)
-            media_data = MediaFileCreate(
-                filename=file.filename,
-                file_path=str(file_path),
-                file_url=f"/uploads/{filename}",
-                file_type=get_file_type(file.filename),
-                file_size=file.size,
-                mime_type=file.content_type,
-                alt_text="",
-                description=""
-            )
-            
-            uploaded_file = await media_service.create_media_file(media_data)
-            uploaded_files.append(uploaded_file)
-            
-        except Exception as e:
-            failed_files.append(f"{file.filename}: {str(e)}")
-    
-    if failed_files:
-        # Return partial success with error details
-        return {
-            "uploaded": uploaded_files,
-            "failed": failed_files,
-            "message": f"Uploaded {len(uploaded_files)} files, {len(failed_files)} failed"
-        }
-    
-    return uploaded_files
+            uploaded_files.append(await _save_upload(file, db))
+        except HTTPException as e:
+            failed_files.append(f"{file.filename}: {e.detail}")
+        except Exception:
+            logger.exception("Bulk upload failed for %s", file.filename)
+            failed_files.append(f"{file.filename}: internal error")
+
+    return BulkUploadResponse(
+        uploaded=uploaded_files,
+        failed=failed_files,
+        message=f"Uploaded {len(uploaded_files)} files, {len(failed_files)} failed",
+    )

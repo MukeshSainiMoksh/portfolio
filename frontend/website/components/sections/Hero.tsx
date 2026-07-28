@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { getPortfolioData } from "@/services/api";
 import { sfx } from "@/services/sounds";
 
 const ROLES = [
@@ -251,25 +250,23 @@ function HexProfile() {
 }
 
 /* ─── Hero ───────────────────────────────────────────────────────────── */
-export default function Hero() {
+export default function Hero({
+  profile,
+  about,
+  resumeUrl: resumeUrlProp,
+}: {
+  profile: Record<string, string>;
+  about: Record<string, string>;
+  resumeUrl?: string;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [profile, setProfile] = useState<Record<string, string>>({});
-  const [about,   setAbout]   = useState<Record<string, string>>({});
   const role = useTypewriter(ROLES);
-
-  useEffect(() => {
-    getPortfolioData()
-      .then((data) => {
-        setProfile(data.profile?.hero  ?? {});
-        setAbout(data.profile?.about   ?? {});
-      })
-      .catch(() => {});
-  }, []);
 
   /* neural network canvas */
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -281,7 +278,9 @@ export default function Hero() {
       canvas.width  = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
       nodes.length  = 0;
-      const count   = Math.floor((canvas.width * canvas.height) / 14000);
+      // lower particle density on small screens (CPU/battery)
+      const density = window.innerWidth < 768 ? 28000 : 14000;
+      const count   = Math.floor((canvas.width * canvas.height) / density);
       for (let i = 0; i < count; i++) {
         nodes.push({
           x:     Math.random() * canvas.width,
@@ -333,11 +332,12 @@ export default function Hero() {
     return () => { cancelAnimationFrame(animId); window.removeEventListener("resize", onResize); };
   }, []);
 
+  const availability = profile.availability ?? "Available for opportunities";
   const name        = profile.name       ?? "Mukesh Kumar Saini";
   const subtitle    = profile.subtitle   ?? "Building intelligent, scalable AI systems and full-stack applications with modern technologies";
   const githubUrl   = about.github_url   ?? "#";
   const linkedinUrl = about.linkedin_url ?? "#";
-  const resumeUrl   = about.resume_url   ?? "#";
+  const resumeUrl   = resumeUrlProp ?? about.resume_url ?? "#";
 
   const nameParts   = name.split(" ");
   const firstName   = nameParts[0] ?? "";
@@ -358,17 +358,19 @@ export default function Hero() {
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-[120px] animate-float"
            style={{ background: "rgba(168,85,247,0.06)", animationDelay: "2.5s" }} />
 
-      {/* Status badge — top right */}
-      <div
-        className="absolute top-24 right-8 border border-[rgba(0,245,255,0.15)] px-4 py-2.5 hidden md:block animate-fade-in"
-        style={{ opacity: 0, animationDelay: "0.8s", background: "rgba(0,245,255,0.03)" }}
-      >
-        <span className="text-[rgba(0,245,255,0.6)] uppercase tracking-[2px]"
-              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "9px" }}>
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#00ff88] shadow-[0_0_6px_#00ff88] mr-2 animate-pulse" />
-          Available for opportunities
-        </span>
-      </div>
+      {/* Status badge — top right (admin-managed via hero.availability; set "off" to hide) */}
+      {availability !== "off" && (
+        <div
+          className="absolute top-24 right-8 border border-[rgba(0,245,255,0.15)] px-4 py-2.5 hidden md:block animate-fade-in"
+          style={{ opacity: 0, animationDelay: "0.8s", background: "rgba(0,245,255,0.03)" }}
+        >
+          <span className="text-[rgba(0,245,255,0.6)] uppercase tracking-[2px]"
+                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "9px" }}>
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#00ff88] shadow-[0_0_6px_#00ff88] mr-2 animate-pulse" />
+            {availability}
+          </span>
+        </div>
+      )}
 
       {/* Main two-column layout */}
       <div className="relative z-10 max-w-6xl mx-auto px-6 pt-24 pb-32 w-full">
@@ -450,7 +452,7 @@ export default function Hero() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </a>
-              <a href="/Mukesh_Saini_CV.pdf" download="Mukesh_Saini_CV.pdf" className="btn-neural"
+              <a href={resumeUrl !== "#" ? resumeUrl : "/Mukesh_Saini_CV.pdf"} download="Mukesh_Saini_CV.pdf" className="btn-neural"
                  onClick={() => sfx.dataTransfer()}
                  style={{ color: "rgba(168,85,247,0.85)", borderColor: "rgba(168,85,247,0.35)", background: "rgba(168,85,247,0.05)" }}>
                 Download CV

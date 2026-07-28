@@ -16,6 +16,8 @@ import '../../features/certifications/screens/certification_form_screen.dart';
 import '../../features/profile/screens/profile_list_screen.dart';
 import '../../features/profile/screens/profile_field_form_screen.dart';
 import '../../features/media/screens/media_gallery_screen.dart';
+import '../../features/messages/screens/messages_list_screen.dart';
+import '../../features/assets/screens/site_assets_screen.dart';
 import 'route_names.dart';
 import '../../providers/auth_provider.dart';
 
@@ -193,6 +195,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: RouteNames.media,
             name: 'media',
             pageBuilder: (context, state) => const MaterialPage(child: MediaGalleryScreen()),
+          ),
+          // Messages (contact inbox)
+          GoRoute(
+            path: RouteNames.messages,
+            name: 'messages',
+            pageBuilder: (context, state) => const MaterialPage(child: MessagesListScreen()),
+          ),
+          // Site assets (resume + intro video)
+          GoRoute(
+            path: RouteNames.siteAssets,
+            name: 'site-assets',
+            pageBuilder: (context, state) => const MaterialPage(child: SiteAssetsScreen()),
           ),
         ],
       ),

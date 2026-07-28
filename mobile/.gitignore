@@ -1,3 +1,9 @@
+# Environment — never commit real env files (repo root also ignores .env,
+# but keep a local rule in case this app is ever split into its own repo)
+.env
+.env.*
+!.env.example
+
 # Miscellaneous
 *.class
 *.log

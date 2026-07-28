@@ -1,4 +1,4 @@
-enum ApiErrorType { unauthorized, forbidden, notFound, validation, network, unknown }
+enum ApiErrorType { unauthorized, forbidden, notFound, validation, rateLimited, network, unknown }
 
 class ApiException implements Exception {
   final String message;
@@ -33,6 +33,12 @@ class ApiException implements Exception {
     message: msg,
     statusCode: 422,
     type: ApiErrorType.validation,
+  );
+
+  factory ApiException.rateLimited(String msg) => ApiException(
+    message: msg,
+    statusCode: 429,
+    type: ApiErrorType.rateLimited,
   );
 
   factory ApiException.network(String msg) => ApiException(

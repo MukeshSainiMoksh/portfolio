@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getPortfolioData } from "@/services/api";
 import { sfx } from "@/services/sounds";
 
 interface Skill {
@@ -52,16 +51,9 @@ function SkillBar({ level, animate, accent }: { level: number; animate: boolean;
   );
 }
 
-export default function Skills() {
-  const [skills,  setSkills]  = useState<Skill[]>([]);
+export default function Skills({ skills }: { skills: Skill[] }) {
   const [animate, setAnimate] = useState(false);
   const sectionRef            = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    getPortfolioData()
-      .then((data) => setSkills(data.skills ?? []))
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(

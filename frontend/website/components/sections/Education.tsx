@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getPortfolioData } from "@/services/api";
-
 interface Education {
   id: number;
   degree: string;
@@ -22,14 +19,7 @@ const TYPE_CONFIG: Record<string, { icon: string; accent: string; rgb: string }>
 };
 const DEFAULT_TYPE = { icon: "◆", accent: "#00f5ff", rgb: "0,245,255" };
 
-export default function Education() {
-  const [items, setItems] = useState<Education[]>([]);
-
-  useEffect(() => {
-    getPortfolioData()
-      .then((data) => setItems(data.education ?? []))
-      .catch(() => {});
-  }, []);
+export default function Education({ items }: { items: Education[] }) {
 
   return (
     <section id="education" className="py-24" style={{ background: "#000308" }}>

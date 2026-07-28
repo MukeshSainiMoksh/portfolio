@@ -10,7 +10,7 @@ psycopg2-binary==2.9.10
 alembic==1.14.0
 
 # Authentication & Security
-python-jose[cryptography]==3.3.0
+python-jose[cryptography]==3.5.0
 bcrypt==3.2.2
 
 # Settings & Validation
@@ -20,6 +20,9 @@ pydantic-settings==2.7.0
 # File Upload & Media
 aiofiles==24.1.0
 pillow==11.1.0
+
+# AI Chatbot
+openai==2.46.0
 
 # Utilities
 python-slugify==8.0.4

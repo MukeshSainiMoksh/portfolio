@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getPortfolioData } from "@/services/api";
 
 function useCountUp(target: number, duration = 1400, active = false) {
   const [count, setCount] = useState(0);
@@ -19,20 +18,14 @@ function useCountUp(target: number, duration = 1400, active = false) {
   return count;
 }
 
-export default function About() {
-  const [about, setAbout]       = useState<Record<string, string>>({});
+export default function About({ about }: { about: Record<string, string> }) {
   const [statsActive, setStats] = useState(false);
   const statsRef                = useRef<HTMLDivElement>(null);
 
-  const yearsCount   = useCountUp(2,  1200, statsActive);
-  const projectCount = useCountUp(10, 1400, statsActive);
-  const certCount    = useCountUp(1,  800,  statsActive);
-
-  useEffect(() => {
-    getPortfolioData()
-      .then((data) => setAbout(data.profile?.about ?? {}))
-      .catch(() => {});
-  }, []);
+  // stats come from admin-managed profile fields, with sensible fallbacks
+  const yearsCount   = useCountUp(Number(about.stat_years)    || 2,  1200, statsActive);
+  const projectCount = useCountUp(Number(about.stat_projects) || 10, 1400, statsActive);
+  const certCount    = useCountUp(Number(about.stat_certs)    || 1,  800,  statsActive);
 
   useEffect(() => {
     const el = statsRef.current;

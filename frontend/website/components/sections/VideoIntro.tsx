@@ -11,6 +11,8 @@ function useThumbnailCanvas(canvasRef: React.RefObject<HTMLCanvasElement | null>
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     const resize = () => {
       canvas.width  = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
@@ -19,13 +21,14 @@ function useThumbnailCanvas(canvasRef: React.RefObject<HTMLCanvasElement | null>
 
     const ctx = canvas.getContext("2d")!;
     let animId: number;
+    let visible = true;
 
     type Pt = { x: number; y: number; vx: number; vy: number; size: number; pulse: number; hue: number };
     const pts: Pt[] = [];
 
     const buildPts = () => {
       pts.length = 0;
-      const n = 100;
+      const n = window.innerWidth < 768 ? 50 : 100; // fewer particles on mobile
       for (let i = 0; i < n; i++) {
         pts.push({
           x: Math.random() * canvas.width,
@@ -107,15 +110,27 @@ function useThumbnailCanvas(canvasRef: React.RefObject<HTMLCanvasElement | null>
         ctx.fillText(l, 16 + i * 190, 20 + (i % 2) * (H - 40));
       });
 
-      animId = requestAnimationFrame(draw);
+      if (visible && !reducedMotion) animId = requestAnimationFrame(draw);
     };
 
     draw();
 
+    // pause the loop when the thumbnail scrolls out of view (battery/CPU)
+    const io = new IntersectionObserver(([entry]) => {
+      const nowVisible = entry.isIntersecting;
+      if (nowVisible && !visible && !reducedMotion) {
+        visible = true;
+        animId = requestAnimationFrame(draw);
+      } else {
+        visible = nowVisible;
+      }
+    });
+    io.observe(canvas);
+
     const ro = new ResizeObserver(() => { resize(); buildPts(); });
     ro.observe(canvas);
 
-    return () => { cancelAnimationFrame(animId); ro.disconnect(); };
+    return () => { cancelAnimationFrame(animId); io.disconnect(); ro.disconnect(); };
   }, [canvasRef]);
 }
 
@@ -303,7 +318,8 @@ function useAudio() {
 }
 
 /* ─── VideoIntro Section ─────────────────────────────────────────────── */
-export default function VideoIntro() {
+export default function VideoIntro({ videoSrc }: { videoSrc?: string }) {
+  const resolvedSrc = videoSrc ?? "/videos/intro.mp4"; // admin upload wins, bundled fallback
   const thumbRef   = useRef<HTMLCanvasElement>(null);
   const loadRef    = useRef<HTMLCanvasElement>(null);
   const videoRef   = useRef<HTMLVideoElement>(null);
@@ -670,7 +686,7 @@ export default function VideoIntro() {
                 {/* actual video */}
                 <video
                   ref={videoRef}
-                  src="/videos/intro.mp4"
+                  src={resolvedSrc}
                   controls
                   playsInline
                   style={{

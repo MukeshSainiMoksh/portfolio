@@ -2,7 +2,7 @@
 Content Models for Portfolio Data
 """
 
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, JSON, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from core.database import Base
@@ -10,7 +10,10 @@ from core.database import Base
 
 class ProfileContent(Base):
     __tablename__ = "profile_content"
-    
+    __table_args__ = (
+        UniqueConstraint("section", "field_name", name="uq_profile_section_field"),
+    )
+
     id = Column(Integer, primary_key=True, index=True)
     section = Column(String(100), nullable=False, index=True)  # hero, about, contact
     field_name = Column(String(100), nullable=False)

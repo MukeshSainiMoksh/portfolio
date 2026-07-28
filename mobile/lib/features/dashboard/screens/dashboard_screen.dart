@@ -11,6 +11,7 @@ import '../../../providers/project_provider.dart';
 import '../../../providers/experience_provider.dart';
 import '../../../providers/education_provider.dart';
 import '../../../providers/certification_provider.dart';
+import '../../../providers/contact_provider.dart';
 import '../../../core/router/route_names.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -23,6 +24,9 @@ class DashboardScreen extends ConsumerWidget {
     final projectsAsync = ref.watch(projectsProvider);
     final experienceAsync = ref.watch(experienceProvider);
     final educationAsync = ref.watch(educationProvider);
+    final certificationsAsync = ref.watch(certificationsProvider);
+    final messagesAsync = ref.watch(messagesProvider);
+    final unreadCount = ref.watch(unreadMessagesCountProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -107,6 +111,19 @@ class DashboardScreen extends ConsumerWidget {
                   icon: Icons.school,
                   onTap: () => context.go(RouteNames.education),
                 ),
+                _StatCard(
+                  title: 'Certifications',
+                  asyncValue: certificationsAsync,
+                  icon: Icons.card_membership,
+                  onTap: () => context.go(RouteNames.certifications),
+                ),
+                _StatCard(
+                  title: 'Messages',
+                  asyncValue: messagesAsync,
+                  icon: Icons.mail,
+                  badgeCount: unreadCount,
+                  onTap: () => context.go(RouteNames.messages),
+                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -136,6 +153,11 @@ class DashboardScreen extends ConsumerWidget {
                   label: const Text('Upload Media'),
                   onPressed: () => context.go(RouteNames.media),
                 ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('Resume / Video'),
+                  onPressed: () => context.go(RouteNames.siteAssets),
+                ),
               ],
             ),
           ],
@@ -150,12 +172,14 @@ class _StatCard extends StatelessWidget {
   final AsyncValue asyncValue;
   final IconData icon;
   final VoidCallback onTap;
+  final int badgeCount;
 
   const _StatCard({
     required this.title,
     required this.asyncValue,
     required this.icon,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
@@ -168,13 +192,35 @@ class _StatCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.neonCyan.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: AppColors.neonCyan),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.neonCyan.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: AppColors.neonCyan),
+                ),
+                if (badgeCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.neonPink,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '$badgeCount',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

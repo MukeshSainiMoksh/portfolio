@@ -1,14 +1,25 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Middleware runs on the edge — no access to localStorage.
-// Token protection is handled client-side in the dashboard layout.
-// This middleware just ensures /login always renders.
+// Token lives in a cookie (see lib/auth.ts) so we can gate routes here,
+// before any dashboard HTML is sent. The API still re-validates the JWT
+// on every request — this is a UX/first-line guard, not the security boundary.
 
-export function middleware(_request: NextRequest) {
+export function middleware(request: NextRequest) {
+  const token = request.cookies.get("admin_token")?.value;
+  const { pathname } = request.nextUrl;
+
+  const isLogin = pathname.startsWith("/login");
+
+  if (!token && !isLogin) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+  if (token && isLogin) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/", "/dashboard/:path*", "/login"],
 };

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getPortfolioData } from "@/services/api";
+import { useState } from "react";
 import { sfx } from "@/services/sounds";
+import TiltCard from "@/components/ui/TiltCard";
 
 interface Project {
   id: number;
@@ -28,16 +28,9 @@ const TAG_CONFIG: Record<string, { icon: string; accent: string; rgb: string }> 
 };
 const DEFAULT_TAG = { icon: "◆", accent: "#00f5ff", rgb: "0,245,255" };
 
-export default function Projects() {
-  const [projects, setProjects] = useState<Project[]>([]);
+export default function Projects({ projects }: { projects: Project[] }) {
   const [showAll,  setShowAll]  = useState(false);
   const [filter,   setFilter]   = useState<"all" | "featured">("all");
-
-  useEffect(() => {
-    getPortfolioData()
-      .then((data) => setProjects(data.projects ?? []))
-      .catch(() => {});
-  }, []);
 
   const filtered  = filter === "featured" ? projects.filter((p) => p.is_featured) : projects;
   const displayed = showAll ? filtered : filtered.slice(0, 6);
@@ -86,9 +79,9 @@ export default function Projects() {
               {displayed.map((project, idx) => {
                 const cfg = project.project_tag ? (TAG_CONFIG[project.project_tag] ?? DEFAULT_TAG) : DEFAULT_TAG;
                 return (
-                  <div
+                  <TiltCard
                     key={project.id}
-                    className="flex flex-col animate-fade-in-up group transition-all duration-300 hover:-translate-y-1"
+                    className="flex flex-col animate-fade-in-up group"
                     style={{
                       opacity: 0,
                       animationDelay: `${(idx % 6) * 0.08}s`,
@@ -247,7 +240,7 @@ export default function Projects() {
                         </span>
                       )}
                     </div>
-                  </div>
+                  </TiltCard>
                 );
               })}
             </div>

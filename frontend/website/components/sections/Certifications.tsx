@@ -2,31 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import api from "@/services/api";
+import type { Certification } from "@/services/portfolio";
 import { sfx } from "@/services/sounds";
 
-interface Certification {
-  id: number;
-  name: string;
-  issuer: string;
-  credential_id: string | null;
-  credential_url: string | null;
-  issue_date: string | null;
-  expiry_date: string | null;
-  description: string | null;
-  badge_url: string | null;
-}
-
-export default function Certifications() {
-  const [certs, setCerts]         = useState<Certification[]>([]);
+export default function Certifications({ certs }: { certs: Certification[] }) {
   const [lightbox, setLightbox]   = useState<string | null>(null);
-
-  useEffect(() => {
-    api
-      .get<Certification[]>("/api/website/certifications/")
-      .then((r) => setCerts(r.data))
-      .catch(() => {});
-  }, []);
 
   /* close lightbox on Escape */
   useEffect(() => {

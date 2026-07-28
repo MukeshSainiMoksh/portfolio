@@ -5,12 +5,14 @@ Admin Authentication Routes
 from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
+from core.ratelimit import rate_limit
 from core.security import (
-    verify_password, 
-    create_access_token, 
+    verify_password,
+    create_access_token,
     get_current_admin_user,
     get_password_hash
 )
@@ -21,7 +23,11 @@ from admin.services.user_service import UserService
 router = APIRouter()
 
 
-@router.post("/login", response_model=Token)
+@router.post(
+    "/login",
+    response_model=Token,
+    dependencies=[Depends(rate_limit("login", max_requests=5, window_seconds=60))],
+)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db)
@@ -100,7 +106,15 @@ async def create_admin_user(
         )
     
     # Create new admin user
-    new_user = await user_service.create_admin_user(user_data)
+    try:
+        new_user = await user_service.create_admin_user(user_data)
+    except IntegrityError:
+        # concurrent request created the same email/username between check and insert
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email or username already registered"
+        )
     return new_user
 
 

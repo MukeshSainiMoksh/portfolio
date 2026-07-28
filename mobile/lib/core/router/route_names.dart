@@ -20,4 +20,6 @@ class RouteNames {
   static const String profileCreate = '/profile/create';
   static const String profileEdit = '/profile/:id/edit';
   static const String media = '/media';
+  static const String messages = '/messages';
+  static const String siteAssets = '/site-assets';
 }

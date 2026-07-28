@@ -3,6 +3,8 @@ Email notification helper — uses smtplib (stdlib, no extra deps)
 """
 
 import asyncio
+import html
+import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -10,9 +12,13 @@ from typing import Optional
 
 from core.config import settings
 
+logger = logging.getLogger("portfolio.email")
+
+SMTP_TIMEOUT_SECONDS = 15
+
 
 def _send_sync(subject: str, html_body: str, text_body: str) -> None:
-    """Blocking send — called via run_in_executor so it doesn't block the event loop."""
+    """Blocking send — called via asyncio.to_thread so it doesn't block the event loop."""
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = settings.SMTP_USER
@@ -21,7 +27,7 @@ def _send_sync(subject: str, html_body: str, text_body: str) -> None:
     msg.attach(MIMEText(text_body, "plain"))
     msg.attach(MIMEText(html_body, "html"))
 
-    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=SMTP_TIMEOUT_SECONDS) as server:
         server.ehlo()
         server.starttls()
         server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
@@ -36,10 +42,20 @@ async def send_contact_notification(
 ) -> None:
     """Send a contact-form notification email to the portfolio owner."""
     if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        return  # email not configured — skip silently
+        logger.warning("SMTP not configured — skipping contact notification email")
+        return
+
+    # strip CR/LF so user input can never inject extra SMTP headers via the Subject
+    name = " ".join(name.splitlines())
+    subject = " ".join(subject.splitlines()) if subject else subject
+
+    # escape all user-supplied values before HTML interpolation (HTML-injection guard)
+    name = html.escape(name)
+    email = html.escape(email)
+    message = html.escape(message)
+    display_subject = html.escape(subject or "(no subject)")
 
     mail_subject = f"[Portfolio] New message from {name}"
-    display_subject = subject or "(no subject)"
 
     html_body = f"""
     <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a0f;color:#e0e0e0;border:1px solid rgba(0,245,255,0.2);border-radius:4px;overflow:hidden;">
@@ -81,5 +97,7 @@ async def send_contact_notification(
         f"Message:\n{message}\n"
     )
 
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, _send_sync, mail_subject, html_body, text_body)
+    try:
+        await asyncio.to_thread(_send_sync, mail_subject, html_body, text_body)
+    except Exception:
+        logger.exception("Failed to send contact notification email")

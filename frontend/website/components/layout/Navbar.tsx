@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { sfx } from "@/services/sounds";
+import { sfx, isMuted, toggleMute } from "@/services/sounds";
 
 const navLinks = [
   { label: "Home",          href: "#home" },
@@ -19,6 +19,10 @@ export default function Navbar() {
   const [scrolled, setScrolled]       = useState(false);
   const [menuOpen, setMenuOpen]       = useState(false);
   const [activeSection, setActive]    = useState("home");
+  const [muted, setMuted]             = useState(false);
+
+  // read persisted mute state after mount (SSR-safe)
+  useEffect(() => { setMuted(isMuted()); }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -153,16 +157,32 @@ export default function Navbar() {
           })}
         </ul>
 
-        {/* Hire Me */}
-        <a
-          href="#contact"
-          onClick={() => sfx.access()}
-          className="hidden lg:inline-flex items-center gap-2 px-5 py-2 border border-[rgba(0,245,255,0.35)] bg-[rgba(0,245,255,0.06)] text-[#00f5ff] transition-all duration-200 hover:bg-[rgba(0,245,255,0.12)] hover:border-[#00f5ff] hover:shadow-[0_0_20px_rgba(0,245,255,0.15)]"
-          style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", letterSpacing: "2px", textTransform: "uppercase" }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88] shadow-[0_0_6px_#00ff88] animate-pulse" />
-          Hire Me
-        </a>
+        {/* Sound toggle + Hire Me */}
+        <div className="hidden lg:flex items-center gap-3">
+          <button
+            onClick={() => { const m = toggleMute(); setMuted(m); if (!m) sfx.softClick(); }}
+            aria-label={muted ? "Unmute sounds" : "Mute sounds"}
+            title={muted ? "Unmute sounds" : "Mute sounds"}
+            className="p-2 border border-[rgba(0,245,255,0.2)] text-[rgba(255,255,255,0.45)] hover:text-[#00f5ff] hover:border-[rgba(0,245,255,0.5)] transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              {muted ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l4-4m0 4l-4-4" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728" />
+              )}
+            </svg>
+          </button>
+          <a
+            href="#contact"
+            onClick={() => sfx.access()}
+            className="inline-flex items-center gap-2 px-5 py-2 border border-[rgba(0,245,255,0.35)] bg-[rgba(0,245,255,0.06)] text-[#00f5ff] transition-all duration-200 hover:bg-[rgba(0,245,255,0.12)] hover:border-[#00f5ff] hover:shadow-[0_0_20px_rgba(0,245,255,0.15)]"
+            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", letterSpacing: "2px", textTransform: "uppercase" }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88] shadow-[0_0_6px_#00ff88] animate-pulse" />
+            Hire Me
+          </a>
+        </div>
 
         {/* Mobile toggle */}
         <button
@@ -203,14 +223,27 @@ export default function Navbar() {
               </a>
             );
           })}
-          <div className="pt-3">
+          <div className="pt-3 flex items-center gap-3">
             <a
               href="#contact"
               onClick={() => { setMenuOpen(false); sfx.access(); }}
-              className="w-full flex justify-center btn-neural py-3"
+              className="flex-1 flex justify-center btn-neural py-3"
             >
               Hire Me
             </a>
+            <button
+              onClick={() => { const m = toggleMute(); setMuted(m); if (!m) sfx.softClick(); }}
+              aria-label={muted ? "Unmute sounds" : "Mute sounds"}
+              className="p-3 border border-[rgba(0,245,255,0.2)] text-[rgba(255,255,255,0.45)] hover:text-[#00f5ff] transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                {muted ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l4-4m0 4l-4-4" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728" />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
       )}

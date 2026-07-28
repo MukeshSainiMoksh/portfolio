@@ -2,8 +2,14 @@
 Application Configuration
 """
 
-from pydantic_settings import BaseSettings
+from pathlib import Path
 from typing import List
+
+from pydantic import model_validator
+from pydantic_settings import BaseSettings
+
+# backend project root (directory containing main.py)
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
@@ -31,8 +37,8 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3001",
     ]
 
-    # File Upload
-    UPLOAD_DIR: str = "uploads"
+    # File Upload — absolute path so it doesn't depend on the working directory
+    UPLOAD_DIR: str = str(BASE_DIR / "uploads")
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
 
     # Admin seed user
@@ -46,9 +52,28 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     NOTIFY_EMAIL: str = "codermsaini@gmail.com"
 
+    # AI Chatbot (OpenAI)
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o-mini"
+
     # Environment
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
+
+    @model_validator(mode="after")
+    def check_production_safety(self):
+        """Refuse to boot in production with development defaults."""
+        if self.ENVIRONMENT == "production":
+            problems = []
+            if "change-this" in self.SECRET_KEY or len(self.SECRET_KEY) < 32:
+                problems.append("SECRET_KEY must be a strong value (32+ chars)")
+            if self.ADMIN_PASSWORD == "admin123":
+                problems.append("ADMIN_PASSWORD must not be the default")
+            if self.DEBUG:
+                problems.append("DEBUG must be False")
+            if problems:
+                raise ValueError("Unsafe production config: " + "; ".join(problems))
+        return self
 
     class Config:
         env_file = ".env"

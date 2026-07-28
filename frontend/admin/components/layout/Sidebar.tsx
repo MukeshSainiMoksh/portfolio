@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import api from "@/services/api";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
+  { label: "Messages", href: "/dashboard/messages" },
   { label: "Profile Content", href: "/dashboard/content" },
   { label: "Skills", href: "/dashboard/skills" },
   { label: "Projects", href: "/dashboard/projects" },
@@ -12,10 +15,19 @@ const navItems = [
   { label: "Education", href: "/dashboard/education" },
   { label: "Certifications", href: "/dashboard/certifications" },
   { label: "Media", href: "/dashboard/media" },
+  { label: "Resume & Video", href: "/dashboard/site-assets" },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [unread, setUnread] = useState(0);
+
+  // unread badge — refresh on route change so it stays current while navigating
+  useEffect(() => {
+    api.get("/api/admin/contacts/unread-count")
+      .then((r) => setUnread(r.data.unread ?? 0))
+      .catch(() => {});
+  }, [pathname]);
 
   return (
     <aside className="w-56 bg-gray-900 text-gray-100 flex flex-col min-h-screen">
@@ -29,11 +41,16 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`block px-4 py-2.5 text-sm rounded-lg mx-2 mb-1 transition-colors ${
+              className={`flex items-center justify-between px-4 py-2.5 text-sm rounded-lg mx-2 mb-1 transition-colors ${
                 isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-800"
               }`}
             >
-              {item.label}
+              <span>{item.label}</span>
+              {item.href === "/dashboard/messages" && unread > 0 && (
+                <span className="ml-2 min-w-[20px] h-5 px-1.5 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[11px] font-semibold">
+                  {unread}
+                </span>
+              )}
             </Link>
           );
         })}
