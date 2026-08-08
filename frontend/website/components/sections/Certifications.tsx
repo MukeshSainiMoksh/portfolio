@@ -18,11 +18,11 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
   if (certs.length === 0) return null;
 
   return (
-    <section id="certifications" className="py-24" style={{ background: "#04000a" }}>
+    <section id="certifications" className="py-24" style={{ background: "var(--surface-1)" }}>
       <div className="max-w-5xl mx-auto px-6">
-        <p className="section-label" style={{ color: "#a855f7" }}>Credentials</p>
+        <p className="section-label" style={{ color: "var(--accent-soft)" }}>Credentials</p>
         <h2 className="section-title">Certifications</h2>
-        <div className="section-divider" style={{ background: "linear-gradient(90deg, #a855f7, transparent)" }} />
+        <div className="section-divider" style={{ background: "linear-gradient(90deg, var(--accent-soft), transparent)" }} />
 
         <div className="grid md:grid-cols-2 gap-5">
           {certs.map((cert, idx) => (
@@ -32,16 +32,17 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
               style={{
                 opacity: 0,
                 animationDelay: `${idx * 0.15}s`,
-                background: "rgba(168,85,247,0.02)",
-                border: "1px solid rgba(168,85,247,0.1)",
-                borderLeft: "2px solid rgba(168,85,247,0.5)",
+                background: "rgb(var(--accent-soft-rgb) / 0.02)",
+                border: "1px solid rgb(var(--accent-soft-rgb) / 0.1)",
+                borderLeft: "2px solid rgb(var(--accent-soft-rgb) / 0.5)",
+                borderRadius: "var(--r-lg)",
                 padding: "24px",
               }}
             >
               {/* BG glow */}
               <div
                 className="absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl pointer-events-none"
-                style={{ background: "rgba(168,85,247,0.04)" }}
+                style={{ background: "rgb(var(--accent-soft-rgb) / 0.04)" }}
               />
 
               <div className="flex items-start gap-4 relative">
@@ -50,7 +51,7 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
                   <button
                     onClick={() => { sfx.hologram(); setLightbox(cert.badge_url!); }}
                     className="w-16 h-16 shrink-0 overflow-hidden transition-all duration-300 hover:scale-105 focus:outline-none"
-                    style={{ border: "1px solid rgba(168,85,247,0.3)", background: "rgba(168,85,247,0.06)" }}
+                    style={{ border: "1px solid rgb(var(--accent-soft-rgb) / 0.3)", background: "rgb(var(--accent-soft-rgb) / 0.06)", borderRadius: "var(--r-md)" }}
                     title="View certificate"
                   >
                     <Image
@@ -64,9 +65,9 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
                 ) : (
                   <div
                     className="w-14 h-14 flex items-center justify-center shrink-0 animate-pulse-glow"
-                    style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.3)" }}
+                    style={{ background: "rgb(var(--accent-soft-rgb) / 0.08)", border: "1px solid rgb(var(--accent-soft-rgb) / 0.3)", borderRadius: "var(--r-md)" }}
                   >
-                    <svg className="w-7 h-7" style={{ color: "#a855f7" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-7 h-7" style={{ color: "var(--accent-soft)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                         d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
                       />
@@ -77,13 +78,13 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
                 <div className="flex-1 min-w-0">
                   <h3
                     className="font-bold text-base leading-snug mb-1"
-                    style={{ color: "rgba(255,255,255,0.9)", fontFamily: "'Syne', sans-serif" }}
+                    style={{ color: "var(--text-1)", fontFamily: "var(--font-sans)" }}
                   >
                     {cert.name}
                   </h3>
                   <p
                     className="font-medium text-sm mb-2"
-                    style={{ color: "#a855f7", fontFamily: "'Syne', sans-serif" }}
+                    style={{ color: "var(--accent-soft)", fontFamily: "var(--font-sans)" }}
                   >
                     {cert.issuer}
                   </p>
@@ -91,7 +92,7 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
                   {cert.description && (
                     <p
                       className="text-sm leading-relaxed mb-3 line-clamp-2"
-                      style={{ color: "rgba(255,255,255,0.35)", fontFamily: "'Syne', sans-serif" }}
+                      style={{ color: "var(--text-3)", fontFamily: "var(--font-sans)" }}
                     >
                       {cert.description}
                     </p>
@@ -99,17 +100,17 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
                     {cert.issue_date && (
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(255,255,255,0.3)" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--text-3)" }}>
                         Issued {cert.issue_date}
                       </span>
                     )}
                     {cert.expiry_date && (
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(255,255,255,0.3)" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--text-3)" }}>
                         Expires {cert.expiry_date}
                       </span>
                     )}
                     {cert.credential_id && (
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(168,85,247,0.5)" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "rgb(var(--accent-soft-rgb) / 0.8)" }}>
                         ID: {cert.credential_id}
                       </span>
                     )}
@@ -118,19 +119,20 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
               </div>
 
               {/* Action row */}
-              <div className="mt-5 pt-4 flex flex-wrap gap-3" style={{ borderTop: "1px solid rgba(168,85,247,0.1)" }}>
+              <div className="mt-5 pt-4 flex flex-wrap gap-3" style={{ borderTop: "1px solid rgb(var(--accent-soft-rgb) / 0.1)" }}>
                 {cert.badge_url && (
                   <button
                     onClick={() => { sfx.hologram(); setLightbox(cert.badge_url!); }}
                     style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: "10px",
-                      letterSpacing: "2px",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "12px",
+                      letterSpacing: "0.12em",
                       textTransform: "uppercase",
                       padding: "8px 18px",
-                      background: "rgba(168,85,247,0.04)",
-                      border: "1px solid rgba(168,85,247,0.2)",
-                      color: "rgba(168,85,247,0.6)",
+                      background: "rgb(var(--accent-soft-rgb) / 0.04)",
+                      border: "1px solid rgb(var(--accent-soft-rgb) / 0.2)",
+                      borderRadius: "var(--r-md)",
+                      color: "rgb(var(--accent-soft-rgb) / 0.9)",
                       cursor: "pointer",
                       transition: "all 0.2s",
                       display: "inline-flex",
@@ -151,14 +153,15 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
                     rel="noopener noreferrer"
                     onClick={() => sfx.access()}
                     style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: "10px",
-                      letterSpacing: "2px",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "12px",
+                      letterSpacing: "0.12em",
                       textTransform: "uppercase",
                       padding: "8px 18px",
-                      background: "rgba(168,85,247,0.06)",
-                      border: "1px solid rgba(168,85,247,0.3)",
-                      color: "#a855f7",
+                      background: "rgb(var(--accent-soft-rgb) / 0.06)",
+                      border: "1px solid rgb(var(--accent-soft-rgb) / 0.3)",
+                      borderRadius: "var(--r-md)",
+                      color: "var(--accent-soft)",
                       textDecoration: "none",
                       display: "inline-flex",
                       alignItems: "center",
@@ -182,7 +185,10 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
       {lightbox && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.92)", backdropFilter: "blur(12px)" }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Certificate preview"
+          style={{ background: "rgb(var(--surface-0-rgb) / 0.92)", backdropFilter: "blur(12px)" }}
           onClick={() => { sfx.shutdown(); setLightbox(null); }}
         >
           <div
@@ -193,7 +199,7 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
             <button
               onClick={() => { sfx.shutdown(); setLightbox(null); }}
               className="absolute -top-10 right-0 flex items-center gap-2 transition-colors"
-              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(255,255,255,0.4)", letterSpacing: "2px", textTransform: "uppercase" }}
+              style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--text-3)", letterSpacing: "0.12em", textTransform: "uppercase" }}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -204,7 +210,7 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
             {/* Certificate image */}
             <div
               className="overflow-hidden"
-              style={{ border: "1px solid rgba(168,85,247,0.3)", boxShadow: "0 0 60px rgba(168,85,247,0.2)" }}
+              style={{ border: "1px solid rgb(var(--accent-soft-rgb) / 0.3)", borderRadius: "var(--r-lg)", boxShadow: "var(--shadow-lg)" }}
             >
               <Image
                 src={lightbox}
@@ -219,7 +225,7 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
             {/* Caption */}
             <p
               className="text-center mt-4"
-              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(168,85,247,0.5)", letterSpacing: "2px" }}
+              style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "rgb(var(--accent-soft-rgb) / 0.8)", letterSpacing: "0.12em" }}
             >
               Microsoft Certified: Azure AI Engineer Associate · ID: A76EDCB4BBE3F103
             </p>

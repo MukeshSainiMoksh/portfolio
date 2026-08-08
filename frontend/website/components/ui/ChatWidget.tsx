@@ -70,13 +70,13 @@ export default function ChatWidget() {
         style={{
           position: "fixed", bottom: "22px", right: "22px", zIndex: 900,
           width: "52px", height: "52px", borderRadius: "50%",
-          background: "rgba(3,8,18,0.94)",
-          border: "1px solid rgba(168,85,247,0.5)",
-          color: "#a855f7", cursor: "pointer", fontSize: "20px",
+          background: "rgb(var(--surface-2-rgb) / 0.72)",
+          backdropFilter: "blur(24px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+          border: "1px solid var(--hairline)",
+          color: "var(--accent-soft)", cursor: "pointer", fontSize: "20px",
           display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: open
-            ? "0 0 24px rgba(168,85,247,0.4)"
-            : "0 4px 16px rgba(0,0,0,0.4), 0 0 12px rgba(168,85,247,0.15)",
+          boxShadow: open ? "var(--shadow-lg)" : "var(--shadow-md)",
           transition: "box-shadow .25s, transform .2s",
         }}
       >
@@ -86,34 +86,40 @@ export default function ChatWidget() {
       {/* panel */}
       {open && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="AI assistant chat"
           style={{
             position: "fixed", bottom: "84px", right: "22px", zIndex: 900,
             width: "min(380px, calc(100vw - 44px))", height: "480px",
-            background: "rgba(3,5,14,0.97)",
-            border: "1px solid rgba(168,85,247,0.35)",
-            boxShadow: "0 12px 48px rgba(0,0,0,0.65), 0 0 28px rgba(168,85,247,0.1)",
+            background: "rgb(var(--surface-2-rgb) / 0.72)",
+            backdropFilter: "blur(24px) saturate(1.6)",
+            WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+            border: "1px solid var(--hairline)",
+            borderRadius: "var(--r-xl)",
+            boxShadow: "var(--shadow-lg)",
             display: "flex", flexDirection: "column",
-            backdropFilter: "blur(14px)",
+            overflow: "hidden",
           }}
         >
           {/* header */}
           <div style={{
             display: "flex", alignItems: "center", gap: "10px",
             padding: "12px 16px",
-            borderBottom: "1px solid rgba(168,85,247,0.18)",
-            background: "rgba(168,85,247,0.05)",
+            borderBottom: "1px solid var(--hairline)",
+            background: "rgb(var(--accent-soft-rgb) / 0.05)",
           }}>
             <span style={{
               width: "8px", height: "8px", borderRadius: "50%",
-              background: "#00ff88", boxShadow: "0 0 8px #00ff88",
+              background: "var(--success)", boxShadow: "0 0 8px rgb(var(--success-rgb) / 0.45)",
               animation: "chat-pulse 1.6s ease-in-out infinite",
             }} />
             <style>{`@keyframes chat-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }`}</style>
             <div>
-              <div style={{ fontFamily: "'Orbitron', monospace", fontSize: "11px", fontWeight: 700, color: "#a855f7", letterSpacing: "2px", textTransform: "uppercase" }}>
+              <div style={{ fontFamily: "var(--font-sans)", fontSize: "12px", fontWeight: 700, color: "var(--accent-soft)", letterSpacing: "2px", textTransform: "uppercase" }}>
                 AI Assistant
               </div>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "8px", color: "rgba(168,85,247,0.5)", letterSpacing: "1px", marginTop: "1px" }}>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--text-3)", letterSpacing: "0.12em", marginTop: "1px" }}>
                 ASK · ABOUT · MUKESH
               </div>
             </div>
@@ -128,13 +134,14 @@ export default function ChatWidget() {
                   alignSelf: m.role === "user" ? "flex-end" : "flex-start",
                   maxWidth: "85%",
                   padding: "10px 14px",
-                  fontFamily: "'Syne', sans-serif",
+                  fontFamily: "var(--font-sans)",
                   fontSize: "13px",
                   lineHeight: 1.6,
                   whiteSpace: "pre-wrap",
-                  color: m.role === "user" ? "#fff" : "rgba(255,255,255,0.8)",
-                  background: m.role === "user" ? "rgba(0,245,255,0.1)" : "rgba(168,85,247,0.08)",
-                  border: m.role === "user" ? "1px solid rgba(0,245,255,0.25)" : "1px solid rgba(168,85,247,0.2)",
+                  borderRadius: "var(--r-md)",
+                  color: "var(--text-1)",
+                  background: m.role === "user" ? "rgb(var(--accent-rgb) / 0.1)" : "rgb(var(--accent-soft-rgb) / 0.08)",
+                  border: m.role === "user" ? "1px solid rgb(var(--accent-rgb) / 0.25)" : "1px solid var(--hairline)",
                 }}
               >
                 {m.content}
@@ -143,10 +150,11 @@ export default function ChatWidget() {
             {busy && (
               <div style={{
                 alignSelf: "flex-start", padding: "10px 14px",
-                fontFamily: "'JetBrains Mono', monospace", fontSize: "11px",
-                color: "rgba(168,85,247,0.7)",
-                background: "rgba(168,85,247,0.08)",
-                border: "1px solid rgba(168,85,247,0.2)",
+                fontFamily: "var(--font-mono)", fontSize: "12px",
+                borderRadius: "var(--r-md)",
+                color: "var(--accent-soft)",
+                background: "rgb(var(--accent-soft-rgb) / 0.08)",
+                border: "1px solid var(--hairline)",
               }}>
                 <span className="chat-dots">thinking</span>
                 <style>{`
@@ -158,7 +166,7 @@ export default function ChatWidget() {
           </div>
 
           {/* input */}
-          <div style={{ display: "flex", gap: "8px", padding: "12px", borderTop: "1px solid rgba(168,85,247,0.18)" }}>
+          <div style={{ display: "flex", gap: "8px", padding: "12px", borderTop: "1px solid var(--hairline)" }}>
             <input
               ref={inputRef}
               value={input}
@@ -168,11 +176,12 @@ export default function ChatWidget() {
               maxLength={1000}
               aria-label="Chat message"
               style={{
-                flex: 1, background: "rgba(168,85,247,0.04)",
-                border: "1px solid rgba(168,85,247,0.2)",
-                padding: "10px 12px", color: "#fff",
-                fontFamily: "'Syne', sans-serif", fontSize: "13px",
-                outline: "none", caretColor: "#a855f7",
+                flex: 1, background: "rgb(var(--accent-soft-rgb) / 0.04)",
+                border: "1px solid var(--hairline)",
+                borderRadius: "var(--r-md)",
+                padding: "10px 12px", color: "var(--text-1)",
+                fontFamily: "var(--font-sans)", fontSize: "13px",
+                outline: "none", caretColor: "var(--accent-soft)",
               }}
             />
             <button
@@ -181,11 +190,12 @@ export default function ChatWidget() {
               aria-label="Send message"
               style={{
                 padding: "0 16px",
-                background: busy || !input.trim() ? "rgba(168,85,247,0.05)" : "rgba(168,85,247,0.15)",
-                border: "1px solid rgba(168,85,247,0.35)",
-                color: busy || !input.trim() ? "rgba(168,85,247,0.35)" : "#a855f7",
+                background: busy || !input.trim() ? "rgb(var(--accent-soft-rgb) / 0.05)" : "rgb(var(--accent-soft-rgb) / 0.15)",
+                border: "1px solid var(--hairline)",
+                borderRadius: "var(--r-md)",
+                color: busy || !input.trim() ? "var(--text-3)" : "var(--accent-soft)",
                 cursor: busy || !input.trim() ? "default" : "pointer",
-                fontFamily: "'JetBrains Mono', monospace", fontSize: "13px",
+                fontFamily: "var(--font-mono)", fontSize: "13px",
               }}
             >
               ➤

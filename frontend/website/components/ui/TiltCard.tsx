@@ -10,7 +10,7 @@ export default function TiltCard({
   children,
   className,
   style,
-  maxTilt = 6,
+  maxTilt = 3.5,
 }: {
   children: ReactNode;
   className?: string;

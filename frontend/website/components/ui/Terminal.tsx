@@ -161,10 +161,10 @@ export default function Terminal({ data }: { data: TerminalData }) {
   };
 
   const colors: Record<Line["type"], string> = {
-    input: "#ffffff",
-    output: "rgba(255,255,255,0.55)",
-    accent: "#00f5ff",
-    error: "#ff4466",
+    input: "var(--text-1)",
+    output: "var(--text-2)",
+    accent: "var(--accent-soft)",
+    error: "var(--ember)",
   };
 
   return (
@@ -177,12 +177,15 @@ export default function Terminal({ data }: { data: TerminalData }) {
         style={{
           position: "fixed", bottom: "22px", left: "22px", zIndex: 900,
           width: "44px", height: "44px",
-          background: "rgba(3,8,18,0.92)",
-          border: "1px solid rgba(0,245,255,0.3)",
-          color: "#00f5ff", cursor: "pointer",
-          fontFamily: "'JetBrains Mono', monospace", fontSize: "16px",
+          background: "rgb(var(--surface-2-rgb) / 0.72)",
+          backdropFilter: "blur(24px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+          border: "1px solid var(--hairline)",
+          borderRadius: "var(--r-md)",
+          color: "var(--accent-soft)", cursor: "pointer",
+          fontFamily: "var(--font-mono)", fontSize: "16px",
           display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: open ? "0 0 18px rgba(0,245,255,0.35)" : "none",
+          boxShadow: open ? "var(--shadow-lg)" : "var(--shadow-md)",
           transition: "box-shadow .2s",
         }}
       >
@@ -192,29 +195,35 @@ export default function Terminal({ data }: { data: TerminalData }) {
       {/* terminal panel */}
       {open && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Visitor shell terminal"
           style={{
             position: "fixed", bottom: "78px", left: "22px", zIndex: 900,
             width: "min(480px, calc(100vw - 44px))", height: "380px",
-            background: "rgba(2,5,12,0.97)",
-            border: "1px solid rgba(0,245,255,0.3)",
-            boxShadow: "0 8px 40px rgba(0,0,0,0.6), 0 0 24px rgba(0,245,255,0.08)",
+            background: "rgb(var(--surface-2-rgb) / 0.72)",
+            backdropFilter: "blur(24px) saturate(1.6)",
+            WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+            border: "1px solid var(--hairline)",
+            borderRadius: "var(--r-xl)",
+            boxShadow: "var(--shadow-lg)",
             display: "flex", flexDirection: "column",
-            backdropFilter: "blur(12px)",
+            overflow: "hidden",
           }}
         >
           {/* title bar */}
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "8px 14px", borderBottom: "1px solid rgba(0,245,255,0.12)",
-            background: "rgba(0,245,255,0.03)",
+            padding: "8px 14px", borderBottom: "1px solid var(--hairline)",
+            background: "rgb(var(--accent-rgb) / 0.04)",
           }}>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(0,245,255,0.6)", letterSpacing: "2px" }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--accent-soft)", letterSpacing: "0.12em" }}>
               VISITOR@MKS : ~
             </span>
             <button
               onClick={() => setOpen(false)}
               aria-label="Close terminal"
-              style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: "14px" }}
+              style={{ background: "none", border: "none", color: "var(--text-3)", cursor: "pointer", fontSize: "14px" }}
             >
               ✕
             </button>
@@ -230,21 +239,21 @@ export default function Terminal({ data }: { data: TerminalData }) {
               <div
                 key={i}
                 style={{
-                  fontFamily: "'JetBrains Mono', monospace", fontSize: "12px",
+                  fontFamily: "var(--font-mono)", fontSize: "12px",
                   lineHeight: 1.75, whiteSpace: "pre-wrap", wordBreak: "break-word",
                   color: colors[l.type],
                 }}
               >
                 {l.type === "input" ? (
-                  <><span style={{ color: "#00ff88" }}>visitor@mks</span>
-                    <span style={{ color: "rgba(255,255,255,0.4)" }}>:~$ </span>{l.text}</>
+                  <><span style={{ color: "var(--success)" }}>visitor@mks</span>
+                    <span style={{ color: "var(--text-3)" }}>:~$ </span>{l.text}</>
                 ) : l.text}
               </div>
             ))}
             {/* input row */}
-            <div style={{ display: "flex", alignItems: "center", fontFamily: "'JetBrains Mono', monospace", fontSize: "12px" }}>
-              <span style={{ color: "#00ff88" }}>visitor@mks</span>
-              <span style={{ color: "rgba(255,255,255,0.4)" }}>:~$&nbsp;</span>
+            <div style={{ display: "flex", alignItems: "center", fontFamily: "var(--font-mono)", fontSize: "12px" }}>
+              <span style={{ color: "var(--success)" }}>visitor@mks</span>
+              <span style={{ color: "var(--text-3)" }}>:~$&nbsp;</span>
               <input
                 ref={inputRef}
                 value={input}
@@ -255,7 +264,7 @@ export default function Terminal({ data }: { data: TerminalData }) {
                 aria-label="Terminal command input"
                 style={{
                   flex: 1, background: "transparent", border: "none", outline: "none",
-                  color: "#fff", fontFamily: "inherit", fontSize: "inherit", caretColor: "#00f5ff",
+                  color: "var(--text-1)", fontFamily: "inherit", fontSize: "inherit", caretColor: "var(--accent)",
                 }}
               />
             </div>

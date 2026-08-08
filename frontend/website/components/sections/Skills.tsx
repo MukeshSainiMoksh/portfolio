@@ -12,22 +12,22 @@ interface Skill {
 }
 
 const CATEGORY_CONFIG: Record<string, { label: string; accent: string; rgb: string }> = {
-  "Languages":              { label: "⟨/⟩", accent: "#00f5ff", rgb: "0,245,255" },
-  "Frameworks & Libraries": { label: "⚙",   accent: "#a855f7", rgb: "168,85,247" },
-  "AI & Machine Learning":  { label: "◈",   accent: "#00ff88", rgb: "0,255,136" },
-  "Cloud & DevOps":         { label: "☁",   accent: "#ff2d78", rgb: "255,45,120" },
-  "Databases":              { label: "◉",   accent: "#00f5ff", rgb: "0,245,255" },
-  "Tools":                  { label: "⬡",   accent: "#a855f7", rgb: "168,85,247" },
+  "Languages":              { label: "⟨/⟩", accent: "var(--accent)",      rgb: "var(--accent-rgb)" },
+  "Frameworks & Libraries": { label: "⚙",   accent: "var(--accent-soft)", rgb: "var(--accent-soft-rgb)" },
+  "AI & Machine Learning":  { label: "◈",   accent: "var(--success)",     rgb: "var(--success-rgb)" },
+  "Cloud & DevOps":         { label: "☁",   accent: "var(--ember)",       rgb: "var(--ember-rgb)" },
+  "Databases":              { label: "◉",   accent: "var(--accent)",      rgb: "var(--accent-rgb)" },
+  "Tools":                  { label: "⬡",   accent: "var(--accent-soft)", rgb: "var(--accent-soft-rgb)" },
 };
 
-function SkillBar({ level, animate, accent }: { level: number; animate: boolean; accent: string }) {
+function SkillBar({ level, animate, accent, rgb }: { level: number; animate: boolean; accent: string; rgb: string }) {
   return (
-    <div className="h-1 w-full relative" style={{ background: "rgba(255,255,255,0.05)" }}>
+    <div className="h-1 w-full relative" style={{ background: "rgb(255 255 255 / 0.05)" }}>
       <div
         style={{
           height: "100%",
           width: animate ? `${Math.min(level, 100)}%` : "0%",
-          background: `linear-gradient(90deg, ${accent}, ${accent}80)`,
+          background: `linear-gradient(90deg, rgb(${rgb}), rgb(${rgb} / 0.5))`,
           transition: "width 1.4s cubic-bezier(0.4, 0, 0.2, 1)",
           position: "relative",
         }}
@@ -42,7 +42,6 @@ function SkillBar({ level, animate, accent }: { level: number; animate: boolean;
             height: "6px",
             borderRadius: "50%",
             background: accent,
-            boxShadow: `0 0 8px ${accent}`,
             display: "block",
           }}
         />
@@ -57,7 +56,7 @@ export default function Skills({ skills }: { skills: Skill[] }) {
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setAnimate(true); sfx.startup(); } },
+      ([entry]) => { if (entry.isIntersecting) { setAnimate(true); sfx.startup(); observer.disconnect(); } },
       { threshold: 0.1 }
     );
     if (sectionRef.current) observer.observe(sectionRef.current);
@@ -70,7 +69,7 @@ export default function Skills({ skills }: { skills: Skill[] }) {
   }, {});
 
   return (
-    <section id="skills" ref={sectionRef} className="py-24" style={{ background: "#000308" }}>
+    <section id="skills" ref={sectionRef} className="py-24" style={{ background: "var(--surface-0)" }}>
       <div className="max-w-6xl mx-auto px-6">
         <p className="section-label">What I Know</p>
         <h2 className="section-title">Skills & Technologies</h2>
@@ -79,14 +78,14 @@ export default function Skills({ skills }: { skills: Skill[] }) {
         {Object.keys(byCategory).length === 0 ? (
           <div
             className="text-center py-20 uppercase tracking-widest"
-            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", color: "rgba(0,245,255,0.3)" }}
+            style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "rgb(var(--accent-rgb) / 0.75)" }}
           >
             Loading skills...
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {Object.entries(byCategory).map(([category, categorySkills], catIdx) => {
-              const cfg = CATEGORY_CONFIG[category] ?? { label: "◆", accent: "#00f5ff", rgb: "0,245,255" };
+              const cfg = CATEGORY_CONFIG[category] ?? { label: "◆", accent: "var(--accent)", rgb: "var(--accent-rgb)" };
               return (
                 <div
                   key={category}
@@ -94,17 +93,18 @@ export default function Skills({ skills }: { skills: Skill[] }) {
                   style={{
                     opacity: 0,
                     animationDelay: `${catIdx * 0.1}s`,
-                    background: `rgba(${cfg.rgb}, 0.02)`,
-                    border: `1px solid rgba(${cfg.rgb}, 0.08)`,
-                    borderTop: `2px solid rgba(${cfg.rgb}, 0.4)`,
+                    background: `rgb(${cfg.rgb} / 0.02)`,
+                    border: `1px solid rgb(${cfg.rgb} / 0.08)`,
+                    borderTop: `2px solid rgb(${cfg.rgb} / 0.4)`,
+                    borderRadius: "var(--r-lg)",
                   }}
                 >
                   {/* Category header */}
-                  <div className="flex items-center gap-3 mb-5 pb-4" style={{ borderBottom: `1px solid rgba(${cfg.rgb}, 0.08)` }}>
-                    <span style={{ color: cfg.accent, fontSize: "16px", fontFamily: "'JetBrains Mono', monospace" }}>
+                  <div className="flex items-center gap-3 mb-5 pb-4" style={{ borderBottom: `1px solid rgb(${cfg.rgb} / 0.08)` }}>
+                    <span style={{ color: cfg.accent, fontSize: "16px", fontFamily: "var(--font-mono)" }}>
                       {cfg.label}
                     </span>
-                    <h3 className="text-white font-semibold text-sm" style={{ fontFamily: "'Syne', sans-serif" }}>
+                    <h3 className="text-white font-semibold text-sm" style={{ fontFamily: "var(--font-sans)" }}>
                       {category}
                     </h3>
                   </div>
@@ -114,14 +114,14 @@ export default function Skills({ skills }: { skills: Skill[] }) {
                     {categorySkills.map((skill) => (
                       <div key={skill.id}>
                         <div className="flex justify-between items-center mb-2">
-                          <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", fontFamily: "'Syne', sans-serif" }}>
+                          <span style={{ color: "var(--text-2)", fontSize: "13px", fontFamily: "var(--font-sans)" }}>
                             {skill.skill_name}
                           </span>
-                          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: cfg.accent }}>
+                          <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: cfg.accent }}>
                             {skill.skill_level}%
                           </span>
                         </div>
-                        <SkillBar level={skill.skill_level} animate={animate} accent={cfg.accent} />
+                        <SkillBar level={skill.skill_level} animate={animate} accent={cfg.accent} rgb={cfg.rgb} />
                       </div>
                     ))}
                   </div>

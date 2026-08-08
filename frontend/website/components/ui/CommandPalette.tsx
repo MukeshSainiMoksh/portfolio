@@ -121,21 +121,33 @@ export default function CommandPalette({
       {/* backdrop */}
       <div
         onClick={close}
-        style={{ position: "absolute", inset: 0, background: "rgba(0,2,8,0.75)", backdropFilter: "blur(8px)" }}
+        style={{
+          position: "absolute", inset: 0,
+          background: "rgb(var(--surface-0-rgb) / 0.75)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+        }}
       />
 
       {/* panel */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette"
         style={{
           position: "relative", width: "min(560px, calc(100vw - 32px))",
-          background: "rgba(3,7,16,0.98)",
-          border: "1px solid rgba(0,245,255,0.3)",
-          boxShadow: "0 16px 60px rgba(0,0,0,0.7), 0 0 30px rgba(0,245,255,0.07)",
+          background: "rgb(var(--surface-2-rgb) / 0.72)",
+          backdropFilter: "blur(24px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+          border: "1px solid var(--hairline)",
+          borderRadius: "var(--r-xl)",
+          boxShadow: "var(--shadow-lg)",
+          overflow: "hidden",
         }}
       >
         {/* search input */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "14px 18px", borderBottom: "1px solid rgba(0,245,255,0.12)" }}>
-          <span style={{ color: "rgba(0,245,255,0.6)", fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}>⌕</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "14px 18px", borderBottom: "1px solid var(--hairline)" }}>
+          <span style={{ color: "var(--accent-soft)", fontFamily: "var(--font-mono)", fontSize: "13px" }}>⌕</span>
           <input
             ref={inputRef}
             value={query}
@@ -145,13 +157,14 @@ export default function CommandPalette({
             aria-label="Command palette search"
             style={{
               flex: 1, background: "transparent", border: "none", outline: "none",
-              color: "#fff", fontFamily: "'JetBrains Mono', monospace", fontSize: "13px",
-              letterSpacing: "0.5px", caretColor: "#00f5ff",
+              color: "var(--text-1)", fontFamily: "var(--font-mono)", fontSize: "13px",
+              letterSpacing: "0.5px", caretColor: "var(--accent)",
             }}
           />
           <kbd style={{
-            fontFamily: "'JetBrains Mono', monospace", fontSize: "9px",
-            color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.12)",
+            fontFamily: "var(--font-mono)", fontSize: "12px",
+            color: "var(--text-3)", border: "1px solid var(--hairline)",
+            borderRadius: "var(--r-sm)",
             padding: "3px 7px", letterSpacing: "1px",
           }}>
             ESC
@@ -162,8 +175,8 @@ export default function CommandPalette({
         <div ref={listRef} style={{ maxHeight: "320px", overflowY: "auto", padding: "6px" }}>
           {filtered.length === 0 ? (
             <p style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: "11px",
-              color: "rgba(255,255,255,0.3)", textAlign: "center", padding: "28px 0",
+              fontFamily: "var(--font-mono)", fontSize: "12px",
+              color: "var(--text-3)", textAlign: "center", padding: "28px 0",
               letterSpacing: "1px",
             }}>
               NO RESULTS
@@ -178,19 +191,19 @@ export default function CommandPalette({
                 style={{
                   width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "11px 14px", border: "none", cursor: "pointer", textAlign: "left",
-                  background: idx === active ? "rgba(0,245,255,0.08)" : "transparent",
-                  borderLeft: idx === active ? "2px solid #00f5ff" : "2px solid transparent",
+                  background: idx === active ? "rgb(var(--accent-rgb) / 0.08)" : "transparent",
+                  borderLeft: idx === active ? "2px solid var(--accent)" : "2px solid transparent",
                 }}
               >
                 <span style={{
-                  fontFamily: "'Syne', sans-serif", fontSize: "14px",
-                  color: idx === active ? "#fff" : "rgba(255,255,255,0.65)",
+                  fontFamily: "var(--font-sans)", fontSize: "14px",
+                  color: idx === active ? "var(--text-1)" : "var(--text-2)",
                 }}>
                   {item.label}
                 </span>
                 <span style={{
-                  fontFamily: "'JetBrains Mono', monospace", fontSize: "9px",
-                  color: "rgba(0,245,255,0.45)", letterSpacing: "2px", textTransform: "uppercase",
+                  fontFamily: "var(--font-mono)", fontSize: "12px",
+                  color: "var(--accent-soft)", letterSpacing: "0.12em", textTransform: "uppercase",
                 }}>
                   {item.hint}
                 </span>
@@ -202,9 +215,9 @@ export default function CommandPalette({
         {/* footer hints */}
         <div style={{
           display: "flex", gap: "16px", padding: "10px 18px",
-          borderTop: "1px solid rgba(0,245,255,0.1)",
-          fontFamily: "'JetBrains Mono', monospace", fontSize: "9px",
-          color: "rgba(255,255,255,0.3)", letterSpacing: "1px",
+          borderTop: "1px solid var(--hairline)",
+          fontFamily: "var(--font-mono)", fontSize: "12px",
+          color: "var(--text-3)", letterSpacing: "1px",
         }}>
           <span>↑↓ NAVIGATE</span>
           <span>↵ SELECT</span>

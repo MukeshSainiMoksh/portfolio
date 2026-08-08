@@ -7,11 +7,13 @@
 type AC = AudioContext;
 
 let _ctx: AC | null = null;
-let _vol = 0.52;
+let _vol = 0.32;
 
 const MUTE_KEY = "sfx_muted";
+/* Audio is opt-in. Unexpected sound on a first visit is the fastest way to
+   lose a visitor, so only an explicit unmute (stored "0") enables it. */
 let _muted =
-  typeof window !== "undefined" && localStorage.getItem(MUTE_KEY) === "1";
+  typeof window === "undefined" || localStorage.getItem(MUTE_KEY) !== "0";
 
 export function isMuted(): boolean {
   return _muted;

@@ -1,9 +1,32 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CursorGlow from "@/components/layout/CursorGlow";
 import ScrollProgress from "@/components/layout/ScrollProgress";
+
+/* Self-hosted at build time — no render-blocking request to fonts.googleapis.com */
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist",
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
+});
+
+/* Used for a single emphasis word in the hero. Italic only. */
+const instrument = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: "italic",
+  variable: "--font-instrument",
+  display: "swap",
+});
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 const TITLE = "Mukesh Kumar Saini — Software Engineer & AI Developer";
@@ -31,9 +54,18 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+export const viewport = {
+  themeColor: "#08080c",
+  colorScheme: "dark",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${geist.variable} ${geistMono.variable} ${instrument.variable} scroll-smooth`}
+      suppressHydrationWarning
+    >
       <body>
         <a href="#home" className="skip-link">Skip to content</a>
         <ScrollProgress />
@@ -41,6 +73,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Navbar />
         <main>{children}</main>
         <Footer />
+        {/* Film grain — sits above everything, catches no pointer events */}
+        <div className="grain" aria-hidden="true" />
       </body>
     </html>
   );

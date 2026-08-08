@@ -1,5 +1,3 @@
-"use client";
-
 interface Education {
   id: number;
   degree: string;
@@ -12,17 +10,17 @@ interface Education {
 }
 
 const TYPE_CONFIG: Record<string, { icon: string; accent: string; rgb: string }> = {
-  degree:        { icon: "◎", accent: "#00f5ff",  rgb: "0,245,255" },
-  school:        { icon: "⊙", accent: "#00ff88",  rgb: "0,255,136" },
-  certification: { icon: "◈", accent: "#a855f7",  rgb: "168,85,247" },
-  course:        { icon: "⬡", accent: "#00f5ff",  rgb: "0,245,255" },
+  degree:        { icon: "◎", accent: "var(--accent)",       rgb: "var(--accent-rgb)" },
+  school:        { icon: "⊙", accent: "var(--success)",      rgb: "var(--success-rgb)" },
+  certification: { icon: "◈", accent: "var(--accent-soft)",  rgb: "var(--accent-soft-rgb)" },
+  course:        { icon: "⬡", accent: "var(--accent)",       rgb: "var(--accent-rgb)" },
 };
-const DEFAULT_TYPE = { icon: "◆", accent: "#00f5ff", rgb: "0,245,255" };
+const DEFAULT_TYPE = { icon: "◆", accent: "var(--accent)", rgb: "var(--accent-rgb)" };
 
 export default function Education({ items }: { items: Education[] }) {
 
   return (
-    <section id="education" className="py-24" style={{ background: "#000308" }}>
+    <section id="education" className="py-24" style={{ background: "var(--surface-0)" }}>
       <div className="max-w-5xl mx-auto px-6">
         <p className="section-label">Academic Background</p>
         <h2 className="section-title">Education</h2>
@@ -31,7 +29,7 @@ export default function Education({ items }: { items: Education[] }) {
         {items.length === 0 ? (
           <p
             className="text-center py-20 uppercase tracking-widest"
-            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", color: "rgba(0,245,255,0.3)" }}
+            style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "rgb(var(--accent-rgb) / 0.75)" }}
           >
             No education added yet.
           </p>
@@ -46,9 +44,10 @@ export default function Education({ items }: { items: Education[] }) {
                   style={{
                     opacity: 0,
                     animationDelay: `${idx * 0.15}s`,
-                    background: `rgba(${cfg.rgb}, 0.02)`,
-                    border: `1px solid rgba(${cfg.rgb}, 0.08)`,
-                    borderLeft: `2px solid rgba(${cfg.rgb}, 0.4)`,
+                    background: `rgb(${cfg.rgb} / 0.02)`,
+                    border: `1px solid rgb(${cfg.rgb} / 0.08)`,
+                    borderLeft: `2px solid rgb(${cfg.rgb} / 0.4)`,
+                    borderRadius: "var(--r-lg)",
                   }}
                 >
                   <div className="flex items-start gap-4">
@@ -56,11 +55,12 @@ export default function Education({ items }: { items: Education[] }) {
                     <div
                       className="w-12 h-12 flex items-center justify-center shrink-0"
                       style={{
-                        background: `rgba(${cfg.rgb}, 0.06)`,
-                        border: `1px solid rgba(${cfg.rgb}, 0.2)`,
+                        background: `rgb(${cfg.rgb} / 0.06)`,
+                        border: `1px solid rgb(${cfg.rgb} / 0.2)`,
                         color: cfg.accent,
-                        fontFamily: "'JetBrains Mono', monospace",
+                        fontFamily: "var(--font-mono)",
                         fontSize: "18px",
+                        borderRadius: "var(--r-md)",
                       }}
                     >
                       {cfg.icon}
@@ -70,21 +70,22 @@ export default function Education({ items }: { items: Education[] }) {
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <h3
                           className="font-bold text-base leading-tight"
-                          style={{ color: "rgba(255,255,255,0.9)", fontFamily: "'Syne', sans-serif" }}
+                          style={{ color: "var(--text-1)", fontFamily: "var(--font-sans)" }}
                         >
                           {item.degree}
                         </h3>
                         <span
                           className="capitalize shrink-0"
                           style={{
-                            fontFamily: "'JetBrains Mono', monospace",
-                            fontSize: "9px",
+                            fontFamily: "var(--font-mono)",
+                            fontSize: "12px",
                             padding: "2px 8px",
-                            background: `rgba(${cfg.rgb}, 0.06)`,
-                            border: `1px solid rgba(${cfg.rgb}, 0.15)`,
+                            background: `rgb(${cfg.rgb} / 0.06)`,
+                            border: `1px solid rgb(${cfg.rgb} / 0.15)`,
                             color: cfg.accent,
                             letterSpacing: "1px",
                             textTransform: "uppercase",
+                            borderRadius: "var(--r-md)",
                           }}
                         >
                           {item.type}
@@ -93,7 +94,7 @@ export default function Education({ items }: { items: Education[] }) {
 
                       <p
                         className="font-medium text-sm mb-2"
-                        style={{ color: cfg.accent, fontFamily: "'Syne', sans-serif" }}
+                        style={{ color: cfg.accent, fontFamily: "var(--font-sans)" }}
                       >
                         {item.institution}
                       </p>
@@ -101,21 +102,21 @@ export default function Education({ items }: { items: Education[] }) {
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                         {item.location && (
                           <span
-                            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(255,255,255,0.3)" }}
+                            style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--text-3)" }}
                           >
                             {item.location}
                           </span>
                         )}
                         {item.year && (
                           <span
-                            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(255,255,255,0.3)" }}
+                            style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--text-3)" }}
                           >
                             {item.year}
                           </span>
                         )}
                         {item.grade && (
                           <span
-                            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(251,191,36,0.7)" }}
+                            style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "rgb(var(--ember-rgb) / 0.85)" }}
                           >
                             {item.grade}
                           </span>
@@ -125,7 +126,7 @@ export default function Education({ items }: { items: Education[] }) {
                       {item.description && (
                         <p
                           className="text-sm mt-3 leading-relaxed"
-                          style={{ color: "rgba(255,255,255,0.35)", fontFamily: "'Syne', sans-serif" }}
+                          style={{ color: "var(--text-3)", fontFamily: "var(--font-sans)" }}
                         >
                           {item.description}
                         </p>

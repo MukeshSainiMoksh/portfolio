@@ -7,9 +7,7 @@ import Projects from "@/components/sections/Projects";
 import Certifications from "@/components/sections/Certifications";
 import Education from "@/components/sections/Education";
 import Contact from "@/components/sections/Contact";
-import Terminal from "@/components/ui/Terminal";
-import CommandPalette from "@/components/ui/CommandPalette";
-import ChatWidget from "@/components/ui/ChatWidget";
+import DeferredUI from "@/components/ui/DeferredUI";
 import { fetchPortfolioData, fetchCertifications, fetchSiteAssets } from "@/services/portfolio";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -68,15 +66,15 @@ export default async function HomePage() {
       <Certifications certs={certs} />
       <Education items={data.education ?? []} />
       <Contact />
-      <Terminal
-        data={{
+      <DeferredUI
+        terminalData={{
           skills: (data.skills ?? []).map((s) => s.skill_name),
           projects: projectLinks,
           social,
         }}
+        projects={projectLinks}
+        social={social}
       />
-      <CommandPalette projects={projectLinks} social={social} />
-      <ChatWidget />
     </>
   );
 }

@@ -19,14 +19,14 @@ interface Project {
 }
 
 const TAG_CONFIG: Record<string, { icon: string; accent: string; rgb: string }> = {
-  "AI / NLP":       { icon: "◈", accent: "#00ff88", rgb: "0,255,136" },
-  "AI / Chatbot":   { icon: "⬡", accent: "#a855f7", rgb: "168,85,247" },
-  "AI / DevTools":  { icon: "⚡", accent: "#00f5ff", rgb: "0,245,255" },
-  "Full Stack":     { icon: "⊕", accent: "#00f5ff", rgb: "0,245,255" },
-  "Backend / API":  { icon: "⚙", accent: "#a855f7", rgb: "168,85,247" },
-  "Data / Analytics":{ icon: "◉", accent: "#00ff88", rgb: "0,255,136" },
+  "AI / NLP":       { icon: "◈", accent: "var(--success)",     rgb: "var(--success-rgb)" },
+  "AI / Chatbot":   { icon: "⬡", accent: "var(--accent-soft)", rgb: "var(--accent-soft-rgb)" },
+  "AI / DevTools":  { icon: "⚡", accent: "var(--accent)",      rgb: "var(--accent-rgb)" },
+  "Full Stack":     { icon: "⊕", accent: "var(--accent)",      rgb: "var(--accent-rgb)" },
+  "Backend / API":  { icon: "⚙", accent: "var(--accent-soft)", rgb: "var(--accent-soft-rgb)" },
+  "Data / Analytics":{ icon: "◉", accent: "var(--ember)",      rgb: "var(--ember-rgb)" },
 };
-const DEFAULT_TAG = { icon: "◆", accent: "#00f5ff", rgb: "0,245,255" };
+const DEFAULT_TAG = { icon: "◆", accent: "var(--accent)", rgb: "var(--accent-rgb)" };
 
 export default function Projects({ projects }: { projects: Project[] }) {
   const [showAll,  setShowAll]  = useState(false);
@@ -36,7 +36,7 @@ export default function Projects({ projects }: { projects: Project[] }) {
   const displayed = showAll ? filtered : filtered.slice(0, 6);
 
   return (
-    <section id="projects" className="py-24" style={{ background: "#000308" }}>
+    <section id="projects" className="py-24" style={{ background: "var(--surface-0)" }}>
       <div className="max-w-6xl mx-auto px-6">
         <p className="section-label">What I&apos;ve Built</p>
         <h2 className="section-title">Projects</h2>
@@ -49,14 +49,15 @@ export default function Projects({ projects }: { projects: Project[] }) {
               key={f}
               onClick={() => { setFilter(f); setShowAll(false); sfx.click(); }}
               style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: "10px",
-                letterSpacing: "2px",
+                fontFamily: "var(--font-mono)",
+                fontSize: "12px",
+                letterSpacing: "0.12em",
                 textTransform: "uppercase",
                 padding: "8px 20px",
-                border: filter === f ? "1px solid #00f5ff" : "1px solid rgba(255,255,255,0.1)",
-                background: filter === f ? "rgba(0,245,255,0.08)" : "transparent",
-                color: filter === f ? "#00f5ff" : "rgba(255,255,255,0.35)",
+                borderRadius: "var(--r-md)",
+                border: filter === f ? "1px solid var(--accent)" : "1px solid var(--hairline)",
+                background: filter === f ? "rgb(var(--accent-rgb) / 0.08)" : "transparent",
+                color: filter === f ? "var(--accent)" : "var(--text-3)",
                 cursor: "pointer",
                 transition: "all 0.2s",
               }}
@@ -69,7 +70,7 @@ export default function Projects({ projects }: { projects: Project[] }) {
         {projects.length === 0 ? (
           <p
             className="text-center py-20 uppercase tracking-widest"
-            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", color: "rgba(0,245,255,0.3)" }}
+            style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "rgb(var(--accent-rgb) / 0.75)" }}
           >
             No projects added yet.
           </p>
@@ -85,9 +86,10 @@ export default function Projects({ projects }: { projects: Project[] }) {
                     style={{
                       opacity: 0,
                       animationDelay: `${(idx % 6) * 0.08}s`,
-                      background: `rgba(${cfg.rgb}, 0.02)`,
-                      border: `1px solid rgba(${cfg.rgb}, 0.08)`,
-                      borderTop: `2px solid rgba(${cfg.rgb}, 0.4)`,
+                      background: `rgb(${cfg.rgb} / 0.02)`,
+                      border: `1px solid rgb(${cfg.rgb} / 0.08)`,
+                      borderTop: `2px solid rgb(${cfg.rgb} / 0.4)`,
+                      borderRadius: "var(--r-lg)",
                       padding: "24px",
                     }}
                   >
@@ -96,10 +98,11 @@ export default function Projects({ projects }: { projects: Project[] }) {
                       <div
                         className="w-10 h-10 flex items-center justify-center"
                         style={{
-                          background: `rgba(${cfg.rgb}, 0.08)`,
-                          border: `1px solid rgba(${cfg.rgb}, 0.2)`,
+                          background: `rgb(${cfg.rgb} / 0.08)`,
+                          border: `1px solid rgb(${cfg.rgb} / 0.2)`,
+                          borderRadius: "var(--r-md)",
                           color: cfg.accent,
-                          fontFamily: "'JetBrains Mono', monospace",
+                          fontFamily: "var(--font-mono)",
                           fontSize: "18px",
                         }}
                       >
@@ -111,12 +114,13 @@ export default function Projects({ projects }: { projects: Project[] }) {
                           <span
                             className="uppercase tracking-widest"
                             style={{
-                              fontFamily: "'JetBrains Mono', monospace",
-                              fontSize: "9px",
-                              color: `${cfg.accent}80`,
-                              border: `1px solid rgba(${cfg.rgb}, 0.15)`,
+                              fontFamily: "var(--font-mono)",
+                              fontSize: "12px",
+                              color: `rgb(${cfg.rgb} / 0.85)`,
+                              border: `1px solid rgb(${cfg.rgb} / 0.15)`,
+                              borderRadius: "var(--r-md)",
                               padding: "2px 8px",
-                              background: `rgba(${cfg.rgb}, 0.04)`,
+                              background: `rgb(${cfg.rgb} / 0.04)`,
                             }}
                           >
                             {project.project_tag}
@@ -128,8 +132,8 @@ export default function Projects({ projects }: { projects: Project[] }) {
                     <h3
                       className="font-bold text-base mb-1 transition-colors"
                       style={{
-                        color: "rgba(255,255,255,0.9)",
-                        fontFamily: "'Syne', sans-serif",
+                        color: "var(--text-1)",
+                        fontFamily: "var(--font-sans)",
                       }}
                     >
                       {project.title}
@@ -138,7 +142,7 @@ export default function Projects({ projects }: { projects: Project[] }) {
                     {project.tagline && (
                       <p
                         className="text-sm mb-3"
-                        style={{ color: `${cfg.accent}99`, fontFamily: "'Syne', sans-serif" }}
+                        style={{ color: `rgb(${cfg.rgb} / 0.9)`, fontFamily: "var(--font-sans)" }}
                       >
                         {project.tagline}
                       </p>
@@ -147,7 +151,7 @@ export default function Projects({ projects }: { projects: Project[] }) {
                     {project.description && (
                       <p
                         className="text-sm leading-relaxed mb-4 flex-1 line-clamp-3"
-                        style={{ color: "rgba(255,255,255,0.4)", fontFamily: "'Syne', sans-serif" }}
+                        style={{ color: "var(--text-3)", fontFamily: "var(--font-sans)" }}
                       >
                         {project.description}
                       </p>
@@ -159,12 +163,13 @@ export default function Projects({ projects }: { projects: Project[] }) {
                           <span
                             key={t}
                             style={{
-                              fontFamily: "'JetBrains Mono', monospace",
-                              fontSize: "9px",
+                              fontFamily: "var(--font-mono)",
+                              fontSize: "12px",
                               padding: "2px 8px",
-                              background: `rgba(${cfg.rgb}, 0.04)`,
-                              border: `1px solid rgba(${cfg.rgb}, 0.12)`,
-                              color: `${cfg.accent}80`,
+                              background: `rgb(${cfg.rgb} / 0.04)`,
+                              border: `1px solid rgb(${cfg.rgb} / 0.12)`,
+                              borderRadius: "var(--r-md)",
+                              color: `rgb(${cfg.rgb} / 0.85)`,
                               letterSpacing: "0.5px",
                             }}
                           >
@@ -172,7 +177,7 @@ export default function Projects({ projects }: { projects: Project[] }) {
                           </span>
                         ))}
                         {project.technologies.length > 4 && (
-                          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px", alignSelf: "center" }}>
+                          <span style={{ color: "var(--text-3)", fontSize: "12px", alignSelf: "center" }}>
                             +{project.technologies.length - 4}
                           </span>
                         )}
@@ -181,7 +186,7 @@ export default function Projects({ projects }: { projects: Project[] }) {
 
                     <div
                       className="flex gap-3 mt-auto pt-4"
-                      style={{ borderTop: `1px solid rgba(${cfg.rgb}, 0.08)` }}
+                      style={{ borderTop: `1px solid rgb(${cfg.rgb} / 0.08)` }}
                     >
                       {project.live_url && (
                         <a
@@ -189,13 +194,14 @@ export default function Projects({ projects }: { projects: Project[] }) {
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
-                            fontFamily: "'JetBrains Mono', monospace",
-                            fontSize: "9px",
-                            letterSpacing: "2px",
+                            fontFamily: "var(--font-mono)",
+                            fontSize: "12px",
+                            letterSpacing: "0.12em",
                             textTransform: "uppercase",
                             padding: "7px 14px",
-                            background: `rgba(${cfg.rgb}, 0.06)`,
-                            border: `1px solid rgba(${cfg.rgb}, 0.3)`,
+                            background: `rgb(${cfg.rgb} / 0.06)`,
+                            border: `1px solid rgb(${cfg.rgb} / 0.3)`,
+                            borderRadius: "var(--r-md)",
                             color: cfg.accent,
                             textDecoration: "none",
                             display: "inline-flex",
@@ -213,14 +219,15 @@ export default function Projects({ projects }: { projects: Project[] }) {
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
-                            fontFamily: "'JetBrains Mono', monospace",
-                            fontSize: "9px",
-                            letterSpacing: "2px",
+                            fontFamily: "var(--font-mono)",
+                            fontSize: "12px",
+                            letterSpacing: "0.12em",
                             textTransform: "uppercase",
                             padding: "7px 14px",
                             background: "transparent",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            color: "rgba(255,255,255,0.4)",
+                            border: "1px solid var(--hairline)",
+                            borderRadius: "var(--r-md)",
+                            color: "var(--text-3)",
                             textDecoration: "none",
                             display: "inline-flex",
                             alignItems: "center",
@@ -233,8 +240,8 @@ export default function Projects({ projects }: { projects: Project[] }) {
                       )}
                       {!project.live_url && !project.github_url && (
                         <span
-                          style={{ color: "rgba(255,255,255,0.2)", fontSize: "11px", alignSelf: "center",
-                                   fontFamily: "'JetBrains Mono', monospace" }}
+                          style={{ color: "var(--text-3)", fontSize: "12px", alignSelf: "center",
+                                   fontFamily: "var(--font-mono)" }}
                         >
                           Private Project
                         </span>
