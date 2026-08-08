@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer
       className="relative border-t border-hairline py-10 px-4"
-      style={{ background: "var(--surface-0)" }}
+      style={{ background: "rgb(var(--surface-0-rgb) / 0.55)" }}
     >
       <div
         className="absolute top-0 left-0 right-0 h-px"

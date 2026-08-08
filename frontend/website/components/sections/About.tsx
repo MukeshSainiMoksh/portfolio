@@ -46,7 +46,7 @@ export default function About({ about }: { about: Record<string, string> }) {
   ];
 
   return (
-    <section id="about" className="py-24" style={{ background: "var(--surface-1)" }}>
+    <section id="about" className="py-24">
       <div className="max-w-6xl mx-auto px-6">
         <p className="section-label">Who I Am</p>
         <h2 className="section-title">About Me</h2>

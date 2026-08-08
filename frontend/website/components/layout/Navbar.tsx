@@ -73,40 +73,20 @@ export default function Navbar() {
   }, [menuOpen]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50">
-      <div
-        className="mx-auto flex items-center justify-between transition-all duration-500 ease-out"
-        style={{
-          // Floating glass island once scrolled; flush and transparent at the top.
-          maxWidth: scrolled ? "1120px" : "1152px",
-          margin: scrolled ? "12px auto 0" : "0 auto",
-          padding: scrolled ? "10px 16px" : "18px 24px",
-          borderRadius: scrolled ? "var(--r-xl)" : "0",
-          background: scrolled ? "rgb(var(--surface-2-rgb) / 0.66)" : "transparent",
-          border: `1px solid ${scrolled ? "var(--hairline)" : "transparent"}`,
-          backdropFilter: scrolled ? "blur(24px) saturate(1.6)" : "none",
-          WebkitBackdropFilter: scrolled ? "blur(24px) saturate(1.6)" : "none",
-          boxShadow: scrolled ? "var(--shadow-md)" : "none",
-        }}
-      >
+    <nav
+      className="nav-bar fixed top-0 left-0 right-0 z-50"
+      data-scrolled={scrolled ? "true" : "false"}
+      style={{ paddingBlock: scrolled ? "10px" : "16px" }}
+    >
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6">
         {/* ── Logo ── */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 shrink-0"
+          className="nav-logo flex items-center gap-2.5 shrink-0"
           style={{ textDecoration: "none" }}
           aria-label="Home"
         >
-          <span
-            aria-hidden="true"
-            style={{
-              width: "22px",
-              height: "22px",
-              borderRadius: "7px",
-              background: "linear-gradient(140deg, var(--accent-soft), var(--accent-deep))",
-              boxShadow: "0 0 0 1px rgb(var(--accent-rgb) / 0.35)",
-              flexShrink: 0,
-            }}
-          />
+          <span className="nav-mark" aria-hidden="true" />
           <span
             style={{
               fontFamily: "var(--font-sans)",
@@ -131,19 +111,8 @@ export default function Navbar() {
                   href={link.href}
                   onClick={() => sfx.click()}
                   aria-current={isActive ? "true" : undefined}
-                  className="relative block transition-colors duration-200"
-                  style={{
-                    padding: "7px 12px",
-                    borderRadius: "var(--r-md)",
-                    fontFamily: "var(--font-sans)",
-                    fontSize: "13.5px",
-                    fontWeight: 500,
-                    letterSpacing: "-0.01em",
-                    color: isActive ? "var(--text-1)" : "var(--text-3)",
-                    background: isActive ? "rgb(255 255 255 / 0.06)" : "transparent",
-                  }}
-                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = "var(--text-1)"; }}
-                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = "var(--text-3)"; }}
+                  data-active={isActive ? "true" : "false"}
+                  className="nav-link block"
                 >
                   {link.label}
                 </a>
@@ -195,14 +164,14 @@ export default function Navbar() {
       {/* ── Mobile drawer ── */}
       {menuOpen && (
         <div
-          className="lg:hidden mx-3 mt-2 p-3"
+          /* Attached to the bar, not floating beside it. */
+          className="lg:hidden mt-[10px] px-4 pb-4 pt-2"
           style={{
-            borderRadius: "var(--r-xl)",
-            background: "rgb(var(--surface-2-rgb) / 0.92)",
-            border: "1px solid var(--hairline)",
-            backdropFilter: "blur(24px) saturate(1.6)",
-            WebkitBackdropFilter: "blur(24px) saturate(1.6)",
-            boxShadow: "var(--shadow-lg)",
+            background: "rgb(var(--surface-0-rgb) / 0.94)",
+            borderTop: "1px solid var(--hairline)",
+            backdropFilter: "blur(20px) saturate(1.7)",
+            WebkitBackdropFilter: "blur(20px) saturate(1.7)",
+            boxShadow: "0 16px 32px -24px rgb(0 0 0 / 0.95)",
           }}
         >
           {navLinks.map((link) => {
@@ -214,16 +183,9 @@ export default function Navbar() {
                 href={link.href}
                 onClick={() => { setMenuOpen(false); sfx.click(); }}
                 aria-current={isActive ? "true" : undefined}
-                className="flex items-center gap-2.5 transition-colors"
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: "var(--r-md)",
-                  fontFamily: "var(--font-sans)",
-                  fontSize: "15px",
-                  fontWeight: 500,
-                  color: isActive ? "var(--text-1)" : "var(--text-3)",
-                  background: isActive ? "rgb(255 255 255 / 0.06)" : "transparent",
-                }}
+                data-active={isActive ? "true" : "false"}
+                className="nav-link flex items-center gap-2.5"
+                style={{ padding: "12px 14px", fontSize: "15px" }}
               >
                 {link.label}
               </a>

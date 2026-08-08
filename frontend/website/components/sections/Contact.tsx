@@ -56,7 +56,7 @@ export default function Contact() {
   };
 
   return (
-    <section id="contact" className="py-24" style={{ background: "var(--surface-1)" }}>
+    <section id="contact" className="py-24">
       <div className="max-w-5xl mx-auto px-6">
         <div className="text-center mb-14">
           <p className="section-label justify-center">Let&apos;s Talk</p>

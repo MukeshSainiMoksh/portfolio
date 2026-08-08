@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { sfx } from "@/services/sounds";
 
@@ -40,34 +40,71 @@ function useTypewriter(words: string[], speed = 95, pause = 2200) {
 }
 
 /* ─── Portrait ────────────────────────────────────────────────────────
-   Interim treatment. Phase 1 replaces this with the depth-displaced
-   point cloud; the surrounding layout slot stays the same.            */
+   Circular, and deliberately frameless. The photo is masked with a soft
+   radial falloff so its edge dissolves into the page instead of sitting
+   on it as a pasted rectangle, and a screen-blended accent wash pulls the
+   photo's colour temperature onto the site palette.
+
+   Phase 1 replaces the <Image> with the depth-displaced point cloud; the
+   mask, bloom and ring around it stay as they are.                     */
+/* The source photo was shot against a light grey wall, so left alone it
+   reads as a glowing white disc pasted onto a dark page.
+   Keying the wall out by luminance does not work — skin and wall occupy
+   overlapping luminance bands (face ~150-190, wall ~192-223), so a key
+   that removes the wall also removes the face.
+   What does work: crop in tight so there is very little wall left in
+   frame, then let a hard vignette and the edge feather absorb what
+   remains, with a duotone pulling the rest onto the site palette. */
+const PORTRAIT_FEATHER =
+  "radial-gradient(circle at 50% 44%, #000 46%, rgba(0,0,0,0.8) 62%, rgba(0,0,0,0.32) 77%, transparent 90%)";
+
 function Portrait() {
   return (
     <div
       className="relative shrink-0 animate-fade-in-up"
-      style={{ opacity: 0, animationDelay: "0.35s" }}
+      style={{
+        opacity: 0,
+        animationDelay: "0.35s",
+        width: "clamp(210px, 36vw, 350px)",
+        aspectRatio: "1",
+      }}
     >
-      {/* soft accent bloom behind the photo */}
+      {/* Bloom — the light the portrait appears to sit in. */}
       <div
         aria-hidden="true"
-        className="absolute -inset-10 animate-float"
+        className="absolute animate-float"
         style={{
+          inset: "-34%",
           background:
-            "radial-gradient(circle at 50% 45%, rgb(var(--accent-rgb) / 0.22), transparent 68%)",
-          filter: "blur(28px)",
+            "radial-gradient(circle at 50% 44%, rgb(var(--accent-rgb) / 0.2), rgb(var(--accent-soft-rgb) / 0.06) 38%, transparent 62%)",
+          filter: "blur(46px)",
           pointerEvents: "none",
         }}
       />
+
+      {/* Ring — open at the top-left so it reads as light, not a frame. */}
       <div
-        className="relative overflow-hidden"
+        aria-hidden="true"
+        className="absolute"
         style={{
-          width: "clamp(160px, 34vw, 320px)",
-          aspectRatio: "1 / 1.08",
-          borderRadius: "var(--r-xl)",
-          border: "1px solid var(--hairline-strong)",
-          background: "var(--surface-2)",
-          boxShadow: "var(--shadow-lg)",
+          inset: "-7%",
+          borderRadius: "50%",
+          background:
+            "conic-gradient(from 210deg, transparent 0deg, rgb(var(--accent-rgb) / 0.5) 90deg, rgb(var(--accent-soft-rgb) / 0.22) 200deg, transparent 300deg)",
+          padding: "1px",
+          mask: "radial-gradient(circle, transparent calc(100% - 1.5px), #000 calc(100% - 1.5px))",
+          WebkitMask: "radial-gradient(circle, transparent calc(100% - 1.5px), #000 calc(100% - 1.5px))",
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* The photo itself — no border, no card, feathered edge. */}
+      <div
+        className="absolute inset-0"
+        style={{
+          borderRadius: "50%",
+          maskImage: PORTRAIT_FEATHER,
+          WebkitMaskImage: PORTRAIT_FEATHER,
         }}
       >
         <Image
@@ -75,16 +112,49 @@ function Portrait() {
           alt="Mukesh Kumar Saini"
           fill
           priority
-          sizes="(max-width: 1024px) 40vw, 320px"
-          style={{ objectFit: "cover", objectPosition: "center 18%" }}
+          sizes="(max-width: 1024px) 42vw, 350px"
+          style={{
+            objectFit: "cover",
+            objectPosition: "center 12%",
+            // crop in on the head so the backdrop wall barely appears
+            transform: "scale(1.38)",
+            transformOrigin: "50% 30%",
+            filter: "grayscale(0.34) contrast(1.16) brightness(0.72) saturate(1.15)",
+          }}
         />
-        {/* bottom scrim so the surface reads as one material with the page */}
+
+        {/* Duotone — pulls the remaining midtones onto the site's hue so the
+            photo shares a palette with everything around it. */}
         <div
           aria-hidden="true"
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to top, rgb(var(--surface-0-rgb) / 0.55), transparent 42%)",
+              "linear-gradient(160deg, var(--accent) 0%, var(--accent-deep) 55%, var(--ember) 100%)",
+            mixBlendMode: "color",
+            opacity: 0.34,
+          }}
+        />
+
+        {/* Crush the backdrop wall. Transparent only over the face, then
+            ramps hard to the page colour well before the edge. */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 44%, transparent 19%, rgb(var(--surface-0-rgb) / 0.3) 34%, rgb(var(--surface-0-rgb) / 0.88) 53%, var(--surface-0) 70%)",
+          }}
+        />
+
+        {/* Rim light from the upper left, matching the bloom behind. */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at 30% 22%, rgb(var(--accent-soft-rgb) / 0.3), transparent 52%)",
+            mixBlendMode: "screen",
           }}
         />
       </div>
@@ -102,78 +172,9 @@ export default function Hero({
   about: Record<string, string>;
   resumeUrl?: string;
 }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  /* The ambient field that used to live here is now a single fixed layer
+     behind the whole document — see components/layout/SiteBackground.tsx. */
   const role = useTypewriter(ROLES);
-
-  /* Ambient particle field. Phase 2 replaces this with the WebGL latent
-     field; kept deliberately sparse so it costs almost nothing. */
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    type Node = { x: number; y: number; vx: number; vy: number; size: number };
-    let animId = 0;
-    const nodes: Node[] = [];
-    const LINK_DIST = 120;
-
-    const init = () => {
-      canvas.width  = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-      nodes.length  = 0;
-      const density = window.innerWidth < 768 ? 42000 : 26000;
-      const count   = Math.min(46, Math.floor((canvas.width * canvas.height) / density));
-      for (let i = 0; i < count; i++) {
-        nodes.push({
-          x:    Math.random() * canvas.width,
-          y:    Math.random() * canvas.height,
-          vx:   (Math.random() - 0.5) * 0.22,
-          vy:   (Math.random() - 0.5) * 0.22,
-          size: 0.8 + Math.random() * 1.1,
-        });
-      }
-    };
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (const n of nodes) {
-        n.x += n.vx; n.y += n.vy;
-        if (n.x < 0 || n.x > canvas.width)  n.vx *= -1;
-        if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
-      }
-      ctx.lineWidth = 0.6;
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const dx = nodes[i].x - nodes[j].x;
-          const dy = nodes[i].y - nodes[j].y;
-          const dist = Math.hypot(dx, dy);
-          if (dist < LINK_DIST) {
-            ctx.beginPath();
-            ctx.moveTo(nodes[i].x, nodes[i].y);
-            ctx.lineTo(nodes[j].x, nodes[j].y);
-            // Canvas 2D can't read CSS vars — literal mirrors --accent-rgb
-            ctx.strokeStyle = `rgba(110,123,255,${(1 - dist / LINK_DIST) * 0.14})`;
-            ctx.stroke();
-          }
-        }
-      }
-      ctx.fillStyle = "rgba(165,174,255,0.5)";
-      for (const n of nodes) {
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      animId = requestAnimationFrame(draw);
-    };
-
-    init();
-    draw();
-    const onResize = () => init();
-    window.addEventListener("resize", onResize);
-    return () => { cancelAnimationFrame(animId); window.removeEventListener("resize", onResize); };
-  }, []);
 
   const availability = profile.availability ?? "Available for opportunities";
   const name        = profile.name       ?? "Mukesh Kumar Saini";
@@ -209,11 +210,7 @@ export default function Hero({
     <section
       id="home"
       className="relative flex min-h-screen items-center overflow-hidden"
-      style={{ background: "var(--surface-0)" }}
     >
-      <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 h-full w-full" />
-      <div aria-hidden="true" className="hero-grid absolute inset-0" />
-
       <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-24 pt-32">
         <div className="flex flex-col-reverse items-start gap-12 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
 
@@ -257,6 +254,7 @@ export default function Hero({
                 fontWeight: 700,
                 color: "var(--text-1)",
                 textWrap: "balance",
+                overflowWrap: "break-word",
               }}
             >
               {nameLead}{" "}

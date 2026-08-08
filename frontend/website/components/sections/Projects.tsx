@@ -36,7 +36,7 @@ export default function Projects({ projects }: { projects: Project[] }) {
   const displayed = showAll ? filtered : filtered.slice(0, 6);
 
   return (
-    <section id="projects" className="py-24" style={{ background: "var(--surface-0)" }}>
+    <section id="projects" className="py-24">
       <div className="max-w-6xl mx-auto px-6">
         <p className="section-label">What I&apos;ve Built</p>
         <h2 className="section-title">Projects</h2>

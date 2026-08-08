@@ -276,7 +276,7 @@ export default function VideoIntro({ videoSrc }: { videoSrc?: string }) {
       {/* ════════════════════════════════
           SECTION
       ════════════════════════════════ */}
-      <section id="intro-video" className="py-24" style={{ background: "var(--surface-0)" }}>
+      <section id="intro-video" className="py-24">
         <div className="max-w-5xl mx-auto px-6">
 
           {/* header */}

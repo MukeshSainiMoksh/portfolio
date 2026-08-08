@@ -5,6 +5,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CursorGlow from "@/components/layout/CursorGlow";
 import ScrollProgress from "@/components/layout/ScrollProgress";
+import SiteBackground from "@/components/layout/SiteBackground";
 
 /* Self-hosted at build time — no render-blocking request to fonts.googleapis.com */
 const geist = Geist({
@@ -68,6 +69,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body>
         <a href="#home" className="skip-link">Skip to content</a>
+        {/* One fixed field under the whole document — every section is
+            transparent so the page reads as a single surface. */}
+        <SiteBackground />
         <ScrollProgress />
         <CursorGlow />
         <Navbar />

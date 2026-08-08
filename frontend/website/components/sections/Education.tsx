@@ -20,7 +20,7 @@ const DEFAULT_TYPE = { icon: "◆", accent: "var(--accent)", rgb: "var(--accent-
 export default function Education({ items }: { items: Education[] }) {
 
   return (
-    <section id="education" className="py-24" style={{ background: "var(--surface-0)" }}>
+    <section id="education" className="py-24">
       <div className="max-w-5xl mx-auto px-6">
         <p className="section-label">Academic Background</p>
         <h2 className="section-title">Education</h2>

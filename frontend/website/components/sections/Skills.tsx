@@ -69,7 +69,7 @@ export default function Skills({ skills }: { skills: Skill[] }) {
   }, {});
 
   return (
-    <section id="skills" ref={sectionRef} className="py-24" style={{ background: "var(--surface-0)" }}>
+    <section id="skills" ref={sectionRef} className="py-24">
       <div className="max-w-6xl mx-auto px-6">
         <p className="section-label">What I Know</p>
         <h2 className="section-title">Skills & Technologies</h2>

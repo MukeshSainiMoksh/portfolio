@@ -18,7 +18,7 @@ export default function Certifications({ certs }: { certs: Certification[] }) {
   if (certs.length === 0) return null;
 
   return (
-    <section id="certifications" className="py-24" style={{ background: "var(--surface-1)" }}>
+    <section id="certifications" className="py-24">
       <div className="max-w-5xl mx-auto px-6">
         <p className="section-label" style={{ color: "var(--accent-soft)" }}>Credentials</p>
         <h2 className="section-title">Certifications</h2>
