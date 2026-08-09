@@ -14,6 +14,6 @@ router = APIRouter()
 async def get_public_assets():
     """Public status of resume and intro video"""
     return AssetsStatus(
-        resume=asset_info(RESUME_NAME),
-        intro_video=asset_info(VIDEO_NAME),
+        resume=await asset_info(RESUME_NAME),
+        intro_video=await asset_info(VIDEO_NAME),
     )

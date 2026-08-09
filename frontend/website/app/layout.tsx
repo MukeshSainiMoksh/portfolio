@@ -67,7 +67,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${geist.variable} ${geistMono.variable} ${instrument.variable} scroll-smooth`}
       suppressHydrationWarning
     >
-      <body>
+      {/* Extensions (reader-mode, Grammarly, dark-mode forcers) add attributes
+          to <body> before React hydrates, which React reports as a mismatch.
+          The <html> tag already carries this for the same reason. */}
+      <body suppressHydrationWarning>
         {/* .reveal starts hidden and is un-hidden by an IntersectionObserver.
             Without JS that observer never runs, so un-hide everything. */}
         <noscript>

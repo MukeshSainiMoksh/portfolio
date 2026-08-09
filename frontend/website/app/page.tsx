@@ -10,8 +10,6 @@ import Contact from "@/components/sections/Contact";
 import DeferredUI from "@/components/ui/DeferredUI";
 import { fetchPortfolioData, fetchCertifications, fetchSiteAssets } from "@/services/portfolio";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
 // Next.js requires a literal here — keep in sync with REVALIDATE_SECONDS in services/portfolio.ts
 export const revalidate = 300;
 
@@ -23,8 +21,10 @@ export default async function HomePage() {
   ]);
 
   // admin-uploaded assets win over bundled fallbacks
-  const resumeUrl = assets.resume.url ? `${API_URL}${assets.resume.url}` : undefined;
-  const introVideoUrl = assets.intro_video.url ? `${API_URL}${assets.intro_video.url}` : undefined;
+  // fetchSiteAssets already returns browser-ready URLs — absolute when the
+  // backend stores to S3/R2, API-prefixed when it stores to local disk.
+  const resumeUrl = assets.resume.url ?? undefined;
+  const introVideoUrl = assets.intro_video.url ?? undefined;
 
   const hero = data.profile?.hero ?? {};
   const about = data.profile?.about ?? {};

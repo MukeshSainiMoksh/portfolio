@@ -7,13 +7,13 @@ import uuid
 from pathlib import Path
 from typing import List, Optional
 
-import aiofiles
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from core.security import get_current_admin_user
 from core.config import settings
+from core.storage import get_storage, spooled_copy
 from admin.schemas.media import BulkUploadResponse, MediaFileResponse, MediaFileCreate
 from admin.services.media_service import MediaService
 
@@ -71,44 +71,52 @@ async def _save_upload(
             detail=f"File too large. Maximum size is {settings.MAX_FILE_SIZE / (1024*1024):.1f}MB"
         )
 
-    filename = f"{uuid.uuid4()}{file_ext}"
-    file_path = Path(settings.UPLOAD_DIR) / filename
-    file_path.parent.mkdir(parents=True, exist_ok=True)
+    key = f"{uuid.uuid4()}{file_ext}"
+    storage = get_storage()
 
+    # Buffer first so the size limit is enforced before anything is written to
+    # the backend — a rejected upload must not leave a partial object behind.
     size = 0
+    buffer = spooled_copy()
     try:
-        async with aiofiles.open(file_path, "wb") as out:
-            while chunk := await file.read(UPLOAD_CHUNK_SIZE):
-                size += len(chunk)
-                if size > settings.MAX_FILE_SIZE:
-                    raise HTTPException(
-                        status_code=413,
-                        detail=f"File too large. Maximum size is {settings.MAX_FILE_SIZE / (1024*1024):.1f}MB"
-                    )
-                await out.write(chunk)
+        while chunk := await file.read(UPLOAD_CHUNK_SIZE):
+            size += len(chunk)
+            if size > settings.MAX_FILE_SIZE:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File too large. Maximum size is {settings.MAX_FILE_SIZE / (1024*1024):.1f}MB"
+                )
+            buffer.write(chunk)
 
-        media_service = MediaService(db)
-        media_data = MediaFileCreate(
-            filename=file.filename,
-            file_path=str(file_path),
-            file_url=f"/uploads/{filename}",
-            file_type=get_file_type(file.filename),
-            file_size=size,
-            mime_type=file.content_type,
-            alt_text=alt_text,
-            description=description,
-        )
-        return await media_service.create_media_file(media_data)
+        await storage.save(key, buffer, file.content_type)
+
+        try:
+            media_service = MediaService(db)
+            media_data = MediaFileCreate(
+                filename=file.filename,
+                # file_path records the storage key; it is only used to locate
+                # the object again on delete.
+                file_path=key,
+                file_url=storage.url(key),
+                file_type=get_file_type(file.filename),
+                file_size=size,
+                mime_type=file.content_type,
+                alt_text=alt_text,
+                description=description,
+            )
+            return await media_service.create_media_file(media_data)
+        except Exception:
+            # DB write failed after the object landed — don't orphan it
+            await storage.delete(key)
+            raise
 
     except HTTPException:
-        if file_path.exists():
-            file_path.unlink(missing_ok=True)
         raise
     except Exception:
         logger.exception("Upload failed for %s", file.filename)
-        if file_path.exists():
-            file_path.unlink(missing_ok=True)
         raise HTTPException(status_code=500, detail="Upload failed")
+    finally:
+        buffer.close()
 
 
 @router.get("/files", response_model=List[MediaFileResponse])
@@ -183,13 +191,13 @@ async def delete_media_file(
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete from database")
 
-    # Delete physical file
+    # Remove the stored object. Records created before the storage layer hold
+    # an absolute filesystem path rather than a key, so take the basename —
+    # media keys are flat and that resolves both shapes.
     try:
-        file_path = Path(media_file.file_path)
-        if file_path.exists():
-            file_path.unlink()
+        await get_storage().delete(Path(media_file.file_path).name)
     except Exception:
-        logger.exception("Could not delete physical file %s", media_file.file_path)
+        logger.exception("Could not delete stored object for %s", media_file.file_path)
 
     return {"message": "Media file deleted successfully"}
 
