@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { sfx } from "@/services/sounds";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 export interface PaletteItem {
   label: string;
@@ -25,6 +26,7 @@ export default function CommandPalette({
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const items: PaletteItem[] = useMemo(() => {
     const sections: PaletteItem[] = [
@@ -66,6 +68,9 @@ export default function CommandPalette({
     setActive(0);
   }, []);
 
+  /* Escape + Tab cycling live in the focus trap so every overlay behaves alike */
+  useFocusTrap(panelRef, open, close);
+
   /* global shortcut: Ctrl+K / Cmd+K */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -73,16 +78,23 @@ export default function CommandPalette({
         e.preventDefault();
         setOpen((o) => !o);
         sfx.click();
-      } else if (e.key === "Escape" && open) {
-        close();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, close]);
+  }, []);
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 40);
+  }, [open]);
+
+  /* lock background scroll while the palette is open */
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   useEffect(() => { setActive(0); }, [query]);
@@ -131,6 +143,8 @@ export default function CommandPalette({
 
       {/* panel */}
       <div
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"

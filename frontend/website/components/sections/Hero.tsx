@@ -211,7 +211,7 @@ export default function Hero({
       id="home"
       className="relative flex min-h-screen items-center overflow-hidden"
     >
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-24 pt-32">
+      <div className="container-shell relative z-10 pb-24 pt-32">
         <div className="flex flex-col-reverse items-start gap-12 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
 
           {/* ── Text column ── */}

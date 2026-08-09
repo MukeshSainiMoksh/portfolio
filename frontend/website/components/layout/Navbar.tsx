@@ -78,7 +78,7 @@ export default function Navbar() {
       data-scrolled={scrolled ? "true" : "false"}
       style={{ paddingBlock: scrolled ? "10px" : "16px" }}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6">
+      <div className="container-shell flex items-center justify-between">
         {/* ── Logo ── */}
         <Link
           href="/"

@@ -12,12 +12,13 @@
     /* ── Surfaces ──────────────────────────────────────────────────────
        Near-black with a cool temperature, not pure black. Depth comes
        from the ladder + hairlines, never from drop shadows alone.       */
-    --surface-0: #08080c;   /* page                */
-    --surface-1: #0d0d13;   /* alternating section */
-    --surface-2: #131320;   /* card                */
-    --surface-3: #1b1b2b;   /* raised / hover      */
+    --surface-0: #08080c;   /* page          */
+    --surface-1: #0d0d13;   /* raised band   */
+    --surface-2: #131320;   /* card          */
+    --surface-3: #1b1b2b;   /* hover / input */
     --surface-0-rgb: 8 8 12;
     --surface-2-rgb: 19 19 32;
+    --surface-3-rgb: 27 27 43;
 
     --hairline:        rgb(255 255 255 / 0.07);
     --hairline-strong: rgb(255 255 255 / 0.13);
@@ -43,7 +44,7 @@
     --danger-rgb:  255 107 107;
 
     /* ── Text — every value below passes WCAG AA on --surface-0 ──────
-       text-1 19:1 · text-2 10:1 · text-3 6.1:1                         */
+       text-1 17.6:1 · text-2 10.3:1 · text-3 6.5:1                     */
     --text-1: rgb(255 255 255 / 0.94);
     --text-2: rgb(255 255 255 / 0.72);
     --text-3: rgb(255 255 255 / 0.56);
@@ -54,19 +55,24 @@
     --font-mono:  var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
     --font-serif: var(--font-instrument), Georgia, "Times New Roman", serif;
 
-    /* Fluid type scale */
-    /* Lower bound has to clear a 390px viewport — "Mukesh Kumar" must fit
-       on one line inside 342px of content width. */
+    /* Fluid type scale. The display lower bound has to clear a 390px
+       viewport — "Mukesh Kumar" must fit on one line in 342px. */
     --step-display: clamp(2.15rem, 8.2vw, 8rem);
-    --step-h2:      clamp(1.85rem, 3.6vw, 3rem);
-    --step-h3:      clamp(1.15rem, 1.6vw, 1.4rem);
+    --step-h2:      clamp(1.75rem, 3.4vw, 2.75rem);
+    --step-h3:      clamp(1.05rem, 1.5vw, 1.25rem);
     --step-body:    1rem;
     --step-meta:    0.75rem;   /* 12px floor — no 9px text anywhere */
 
+    /* ── Layout ────────────────────────────────────────────────────── */
+    --container:      1140px;
+    --container-text: 900px;   /* reading-width sections */
+    --gutter:         clamp(1.25rem, 4vw, 2rem);
+    --section-pad:    clamp(4.5rem, 10vw, 8rem);
+
     /* ── Radius ────────────────────────────────────────────────────── */
-    --r-sm: 4px;
+    --r-sm: 6px;
     --r-md: 10px;
-    --r-lg: 14px;
+    --r-lg: 16px;
     --r-xl: 24px;
 
     /* ── Elevation ────────────────────────────────────────────────── */
@@ -84,11 +90,12 @@
 
   html {
     scroll-behavior: smooth;
-    /* stop long words from forcing horizontal scroll on 390px */
     -webkit-text-size-adjust: 100%;
     /* Base colour lives here so <body> can stay transparent and let the
        fixed .site-bg layer (z-index -1) show through under every section. */
     background: var(--surface-0);
+    /* Sticky nav must not cover the target of an in-page anchor. */
+    scroll-padding-top: 92px;
   }
 
   body {
@@ -106,7 +113,7 @@
     color: var(--text-1);
     font-weight: 700;
     letter-spacing: -0.03em;
-    line-height: 1.1;
+    line-height: 1.15;
   }
 
   ::selection { background: rgb(var(--accent-rgb) / 0.28); color: #fff; }
@@ -125,104 +132,123 @@
    COMPONENT CLASSES
    ════════════════════════════════════════════════════════════════════════ */
 @layer components {
-  .section {
-    @apply mx-auto max-w-6xl px-6;
-    padding-block: clamp(5rem, 11vw, 9rem);
+
+  /* ── Section shell ────────────────────────────────────────────────
+     Every section uses the same container, gutter and vertical rhythm.
+     Before this existed each one picked its own max-width, which is why
+     the page never lined up down the left edge.                       */
+  /* Horizontal rhythm only. Hero, navbar and footer use this so their
+     content lines up down the same left edge as every section. */
+  .container-shell {
+    width: 100%;
+    max-width: var(--container);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
   }
 
-  /* ── Section header trio ────────────────────────────────────────── */
-  .section-label {
+  .section-shell {
+    width: 100%;
+    max-width: var(--container);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    padding-block: var(--section-pad);
+  }
+  /* Narrower reading measure, but the same left edge — the inner content
+     narrows, not the container, so the page keeps one vertical rule. */
+  .section-shell[data-width="text"] > * { max-width: var(--container-text); }
+  .section-shell[data-align="center"] > * { margin-inline: auto; }
+
+  .section-eyebrow {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     font-family: var(--font-mono);
     font-size: var(--step-meta);
     color: var(--accent-soft);
-    letter-spacing: 0.18em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
-  .section-label::before {
+  .section-eyebrow::before {
     content: '';
-    width: 18px;
+    width: 20px;
     height: 1px;
-    background: rgb(var(--accent-rgb) / 0.55);
+    background: rgb(var(--accent-rgb) / 0.6);
+    flex-shrink: 0;
   }
-  .section-subtitle { @apply section-label; }
+  .section-head[data-align="center"] .section-eyebrow { justify-content: center; }
 
   .section-title {
-    font-family: var(--font-sans);
-    font-weight: 700;
     font-size: var(--step-h2);
     color: var(--text-1);
     letter-spacing: -0.035em;
-    line-height: 1.05;
-    margin-bottom: 10px;
+    line-height: 1.08;
     text-wrap: balance;
   }
 
-  .section-divider {
-    width: 44px;
-    height: 1px;
-    background: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.9), transparent);
-    margin-bottom: 44px;
+  .section-lede {
+    margin-top: 14px;
+    max-width: 58ch;
+    color: var(--text-2);
+    font-size: 1rem;
+    line-height: 1.7;
+    text-wrap: pretty;
   }
+  .section-head[data-align="center"] .section-lede { margin-inline: auto; }
 
-  /* ── Cards ───────────────────────────────────────────────────────
-     One card shape. The variants differ only by accent hue.         */
-  .card-neural,
-  .card-cosmic,
-  .card-holo {
+  .section-head { margin-bottom: clamp(2.5rem, 5vw, 3.5rem); }
+
+  /* ── Card ─────────────────────────────────────────────────────────
+     One card treatment for the whole site. It is slightly translucent
+     so the field behind the page shows through — that is what keeps a
+     card feeling like part of the surface rather than a sticker.      */
+  .card {
     position: relative;
-    overflow: hidden;
     padding: 24px;
     border-radius: var(--r-lg);
-    background: var(--surface-2);
+    background: rgb(var(--surface-2-rgb) / 0.55);
     border: 1px solid var(--hairline);
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  }
+
+  .card-interactive {
     transition:
       background   var(--dur-base) var(--ease-out),
       border-color var(--dur-base) var(--ease-out),
       transform    var(--dur-base) var(--ease-out),
       box-shadow   var(--dur-base) var(--ease-out);
   }
-  /* top hairline that lights up on hover */
-  .card-neural::before,
-  .card-cosmic::before,
-  .card-holo::before {
+  .card-interactive:hover {
+    background: rgb(var(--surface-3-rgb) / 0.62);
+    border-color: var(--hairline-strong);
+    transform: translateY(-3px);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07), var(--shadow-md);
+  }
+  /* A hairline that lights along the top edge on hover. */
+  .card-interactive::before {
     content: '';
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.6), transparent);
+    border-radius: inherit;
+    background: linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.65), transparent);
     opacity: 0;
     transition: opacity var(--dur-base) var(--ease-out);
   }
-  .card-neural:hover,
-  .card-cosmic:hover,
-  .card-holo:hover {
-    background: var(--surface-3);
-    border-color: var(--hairline-strong);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-  }
-  .card-neural:hover::before,
-  .card-cosmic:hover::before,
-  .card-holo:hover::before { opacity: 1; }
+  .card-interactive:hover::before { opacity: 1; }
 
-  .card-cosmic::before { background: linear-gradient(90deg, transparent, rgb(var(--accent-soft-rgb) / 0.6), transparent); }
-  .card-holo::before   { background: linear-gradient(90deg, transparent, rgb(var(--success-rgb) / 0.5), transparent); }
-
-  /* Legacy aliases kept so older markup keeps resolving */
-  .card-glass, .card-glow, .card-dark { @apply card-neural; }
-
-  /* ── Buttons ─────────────────────────────────────────────────────
-     Primary is solid accent. Secondary is a quiet hairline button.  */
+  /* ── Buttons ──────────────────────────────────────────────────────
+     Physical objects: a lit top edge, a body, and an extruded base
+     they press into on click.                                        */
   .btn-neural,
   .btn-cosmic {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 13px 22px;
+    justify-content: center;
+    gap: 9px;
+    padding: 12px 20px;
     border-radius: var(--r-md);
     font-family: var(--font-sans);
     font-size: 0.875rem;
@@ -234,10 +260,6 @@
     transition: all var(--dur-fast) var(--ease-out);
   }
 
-  /* Both buttons are physical objects: a lit top edge, a body, and an
-     extruded base they press down into when clicked. */
-
-  /* secondary / quiet */
   .btn-neural {
     background: rgb(255 255 255 / 0.05);
     border: 1px solid var(--hairline-strong);
@@ -264,7 +286,6 @@
       0 2px 6px -4px rgb(0 0 0 / 0.6);
   }
 
-  /* primary / solid accent */
   .btn-cosmic {
     background: linear-gradient(180deg, var(--accent-soft), var(--accent));
     border: 1px solid var(--accent);
@@ -290,30 +311,61 @@
       0 3px 8px -5px rgb(var(--accent-rgb) / 0.5);
   }
 
-  .btn-primary, .btn-outline, .btn-secondary { @apply btn-neural; }
-  .btn-solid { @apply btn-cosmic; }
+  .btn-neural[disabled],
+  .btn-cosmic[disabled] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
 
-  /* ── Badges ──────────────────────────────────────────────────────
-     12px floor, mono only because these carry real data.            */
+  /* Quiet inline link/button used inside cards. */
+  .btn-quiet {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 12px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--hairline);
+    background: transparent;
+    color: var(--text-2);
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--dur-fast) var(--ease-out);
+  }
+  .btn-quiet:hover {
+    border-color: rgb(var(--accent-rgb) / 0.5);
+    color: var(--text-1);
+    background: rgb(var(--accent-rgb) / 0.07);
+  }
+
+  /* ── Chips & badges ──────────────────────────────────────────────
+     Mono, because these carry literal data (tech names, states).     */
+  .chip,
   .badge-tech,
   .badge-featured,
-  .badge-current,
-  .badge {
-    display: inline-block;
+  .badge-current {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 4px 10px;
     border-radius: var(--r-sm);
     font-family: var(--font-mono);
     font-size: var(--step-meta);
-    line-height: 1.4;
-    letter-spacing: 0.01em;
+    line-height: 1.5;
     border: 1px solid transparent;
+    white-space: nowrap;
     transition: all var(--dur-fast) var(--ease-out);
   }
+  .chip,
   .badge-tech {
     background: rgb(255 255 255 / 0.05);
     border-color: var(--hairline);
     color: var(--text-2);
   }
+  .chip:hover,
   .badge-tech:hover {
     border-color: rgb(var(--accent-rgb) / 0.4);
     color: var(--accent-soft);
@@ -328,14 +380,63 @@
     border-color: rgb(var(--success-rgb) / 0.28);
     color: var(--success);
   }
-  .badge {
-    background: rgb(var(--accent-rgb) / 0.1);
-    border-color: rgb(var(--accent-rgb) / 0.28);
-    color: var(--accent-soft);
+
+  /* ── Form fields ─────────────────────────────────────────────────
+     Focus styling lives here, not in JS event handlers, so it plays
+     nicely with :focus-visible and keyboard navigation.              */
+  .field-label {
+    display: block;
+    margin-bottom: 7px;
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-2);
+  }
+  .field {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: var(--r-md);
+    background: rgb(0 0 0 / 0.28);
+    border: 1px solid var(--hairline);
+    color: var(--text-1);
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color var(--dur-fast) var(--ease-out),
+                box-shadow   var(--dur-fast) var(--ease-out);
+  }
+  .field::placeholder { color: var(--text-3); }
+  .field:hover  { border-color: var(--hairline-strong); }
+  .field:focus  {
+    border-color: rgb(var(--accent-rgb) / 0.65);
+    box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.14);
+  }
+  .field[aria-invalid="true"] {
+    border-color: rgb(var(--danger-rgb) / 0.6);
+  }
+
+  /* ── Meta text ───────────────────────────────────────────────────
+     One class for every date / id / location line on the site.       */
+  .meta {
+    font-family: var(--font-mono);
+    font-size: var(--step-meta);
+    color: var(--text-3);
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Empty state ─────────────────────────────────────────────────── */
+  .empty-state {
+    padding: 4rem 1.5rem;
+    text-align: center;
+    border-radius: var(--r-lg);
+    border: 1px dashed var(--hairline-strong);
+    color: var(--text-3);
+    font-size: 0.9375rem;
   }
 
   /* ── Text treatments ─────────────────────────────────────────────
-     The serif-italic accent word. Used sparingly — hero only.       */
+     The serif-italic accent word. Used sparingly — hero only.        */
   .display-serif {
     font-family: var(--font-serif);
     font-style: italic;
@@ -349,46 +450,15 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
-  .gradient-text-cyan {
-    background: linear-gradient(100deg, var(--accent-soft), var(--accent));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
 
-  .text-mono-meta {
-    font-family: var(--font-mono);
-    font-size: var(--step-meta);
-    color: var(--text-3);
-    letter-spacing: 0.04em;
-  }
-
-  /* ── Surfaces & effects ──────────────────────────────────────────── */
   .glow-dot {
     width: 7px;
     height: 7px;
+    flex-shrink: 0;
     border-radius: 50%;
     background: var(--success);
     box-shadow: 0 0 0 3px rgb(var(--success-rgb) / 0.16);
     animation: blink-dot 2.4s ease-in-out infinite;
-  }
-
-  /* Liquid glass — refraction, not just blur */
-  .glass {
-    background: rgb(var(--surface-2-rgb) / 0.6);
-    border: 1px solid var(--hairline);
-    backdrop-filter: blur(24px) saturate(1.6);
-    -webkit-backdrop-filter: blur(24px) saturate(1.6);
-    box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.06);
-  }
-
-  .hero-grid {
-    background-image:
-      linear-gradient(rgb(255 255 255 / 0.022) 1px, transparent 1px),
-      linear-gradient(90deg, rgb(255 255 255 / 0.022) 1px, transparent 1px);
-    background-size: 72px 72px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 100%);
-    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 100%);
   }
 
   /* ── Global field ─────────────────────────────────────────────────
@@ -451,35 +521,6 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  .text-glow-cyan   { text-shadow: 0 0 28px rgb(var(--accent-rgb) / 0.45); }
-  .text-glow-purple { text-shadow: 0 0 28px rgb(var(--accent-soft-rgb) / 0.45); }
-  .text-glow-green  { text-shadow: 0 0 28px rgb(var(--success-rgb) / 0.4); }
-
-  .terminal-block {
-    background: rgb(0 0 0 / 0.5);
-    border: 1px solid var(--hairline);
-    border-radius: var(--r-md);
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    color: var(--text-2);
-    padding: 14px 18px;
-  }
-  .terminal-block::before {
-    content: '> ';
-    color: rgb(var(--accent-rgb) / 0.75);
-  }
-
-  .shimmer {
-    background: linear-gradient(
-      90deg,
-      rgb(255 255 255 / 0.03) 0%,
-      rgb(255 255 255 / 0.08) 50%,
-      rgb(255 255 255 / 0.03) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.8s infinite;
-  }
-
   /* ── Navbar ───────────────────────────────────────────────────────
      The bar stays flush to the top edge — it is part of the page, not
      an island hovering over it. Depth comes from lighting: a highlight
@@ -488,10 +529,10 @@
     position: relative;
     border-bottom: 1px solid transparent;
     transition:
-      background       var(--dur-base) var(--ease-out),
-      box-shadow       var(--dur-base) var(--ease-out),
-      border-color     var(--dur-base) var(--ease-out),
-      padding          var(--dur-base) var(--ease-out);
+      background   var(--dur-base) var(--ease-out),
+      box-shadow   var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out),
+      padding      var(--dur-base) var(--ease-out);
   }
   .nav-bar[data-scrolled="true"] {
     background: rgb(var(--surface-0-rgb) / 0.74);
@@ -534,7 +575,7 @@
     font-weight: 500;
     letter-spacing: -0.01em;
     color: var(--text-3);
-    transition: color var(--dur-fast) var(--ease-out),
+    transition: color      var(--dur-fast) var(--ease-out),
                 background var(--dur-fast) var(--ease-out);
   }
   .nav-link:hover { color: var(--text-1); }
@@ -546,12 +587,24 @@
       inset 0 1px 2px rgb(0 0 0 / 0.45),
       inset 0 -1px 0 rgb(255 255 255 / 0.06);
   }
+}
 
-  /* Retired decoration — kept as no-ops so stale markup can't break
-     layout. Remove the class usages, then remove these. */
-  .glitch-text,
-  .card-scan,
-  .hud-corner { position: relative; }
+/* ════════════════════════════════════════════════════════════════════════
+   SCROLL REVEAL
+   Content enters as it comes into view, not on page load. The old
+   load-time animation meant everything below the fold had already
+   finished animating before it was ever seen.
+   ════════════════════════════════════════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity   0.62s var(--ease-out),
+    transform 0.62s var(--ease-out);
+}
+.reveal[data-shown="true"] {
+  opacity: 1;
+  transform: none;
 }
 
 /* ════════════════════════════════════════════════════════════════════════
@@ -565,14 +618,6 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-20px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(20px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-14px); }
@@ -581,10 +626,6 @@
   from { transform: translate3d(0, 0, 0) scale(1); }
   to   { transform: translate3d(-2.5%, 1.5%, 0) scale(1.06); }
 }
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgb(var(--accent-rgb) / 0.35); }
-  50%      { box-shadow: 0 0 0 6px rgb(var(--accent-rgb) / 0); }
-}
 @keyframes blink-cursor {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0; }
@@ -592,10 +633,6 @@
 @keyframes blink-dot {
   0%, 100% { opacity: 1;   transform: scale(1); }
   50%      { opacity: 0.6; transform: scale(0.85); }
-}
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
 }
 
 /* ── Chat ──────────────────────────────────────────────────────────── */
@@ -624,23 +661,11 @@
 .chat-dot:nth-child(3) { animation-delay: 0.32s; }
 .chat-halo  { animation: chatHalo 2.6s ease-out infinite; }
 
-/* ── Animation utilities ─────────────────────────────────────────────── */
-.animate-fade-in-up  { animation: fadeInUp 0.7s var(--ease-out) forwards; }
-.animate-fade-in     { animation: fadeIn 0.7s ease forwards; }
-.animate-slide-left  { animation: slideInLeft 0.7s var(--ease-out) forwards; }
-.animate-slide-right { animation: slideInRight 0.7s var(--ease-out) forwards; }
-.animate-float       { animation: float 7s ease-in-out infinite; }
-.animate-pulse-glow  { animation: pulse-glow 2.4s ease-in-out infinite; }
-.animate-blink       { animation: blink-cursor 1s step-end infinite; }
-
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
-.delay-400 { animation-delay: 0.4s; }
-.delay-500 { animation-delay: 0.5s; }
-.delay-600 { animation-delay: 0.6s; }
-.delay-700 { animation-delay: 0.7s; }
-.delay-800 { animation-delay: 0.8s; }
+/* ── Animation utilities (hero only) ─────────────────────────────────── */
+.animate-fade-in-up { animation: fadeInUp 0.7s var(--ease-out) forwards; }
+.animate-fade-in    { animation: fadeIn 0.7s ease forwards; }
+.animate-float      { animation: float 7s ease-in-out infinite; }
+.animate-blink      { animation: blink-cursor 1s step-end infinite; }
 
 /* ════════════════════════════════════════════════════════════════════════
    ACCESSIBILITY
@@ -654,12 +679,26 @@
   }
   html { scroll-behavior: auto; }
   .grain { display: none; }
+  /* Reveal must never be the reason content is missing. */
+  .reveal { opacity: 1 !important; transform: none !important; }
 }
 
 :focus-visible {
   outline: 2px solid var(--accent-soft);
   outline-offset: 3px;
   border-radius: var(--r-sm);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .skip-link {

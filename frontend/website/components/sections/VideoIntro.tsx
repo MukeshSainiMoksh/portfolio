@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import Section from "@/components/ui/Section";
 
 /* Canvas 2D cannot read CSS custom properties — keep these in sync with
    the tokens in app/globals.css. */
@@ -276,43 +277,41 @@ export default function VideoIntro({ videoSrc }: { videoSrc?: string }) {
       {/* ════════════════════════════════
           SECTION
       ════════════════════════════════ */}
-      <section id="intro-video" className="py-24">
-        <div className="max-w-5xl mx-auto px-6">
-
-          {/* header */}
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <span style={{ display: "block", width: "30px", height: "1px", background: "rgb(var(--accent-rgb) / 0.35)" }} />
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent-soft)" }}>
-              Introduction Video
-            </span>
-            <span style={{ display: "block", width: "30px", height: "1px", background: "rgb(var(--accent-rgb) / 0.35)" }} />
-          </div>
-
-          <h2 className="section-title text-center mb-3">Meet The Engineer</h2>
-          <div className="section-divider mx-auto" />
-
-          <p style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--text-3)", letterSpacing: "0.08em", textAlign: "center", marginBottom: "48px" }}>
-            A brief walkthrough of who I am, what I build, and the problems I solve with AI.
-          </p>
-
-          {/* ── THUMBNAIL CARD ── */}
-          <div
-            role="button"
-            tabIndex={0}
+      <Section
+        id="intro-video"
+        eyebrow="Introduction"
+        title="Meet the engineer"
+        lede="A short walkthrough of who I am, what I build, and the problems I like solving."
+        align="center"
+        width="text"
+      >
+        <div>
+          {/* ── THUMBNAIL ──
+              A real <button>, not a div with role="button" — that only
+              handled Enter, so Space (which is what most people press on a
+              play control) did nothing. */}
+          <button
+            type="button"
             onClick={openModal}
-            onKeyDown={(e) => e.key === "Enter" && openModal()}
+            aria-label="Play the introduction video"
             style={{
-              position: "relative", cursor: "pointer", overflow: "hidden",
-              border: "1px solid rgb(var(--accent-rgb) / 0.14)",
+              position: "relative",
+              display: "block",
+              width: "100%",
+              cursor: "pointer",
+              overflow: "hidden",
+              borderRadius: "var(--r-lg)",
+              border: "1px solid var(--hairline-strong)",
               background: "var(--surface-2)",
-              transition: "border-color .3s, box-shadow .3s",
+              transition: "border-color .3s, box-shadow .3s, transform .3s",
             }}
             className="group"
           >
             {/* neural canvas bg */}
             <canvas
               ref={thumbRef}
-              style={{ display: "block", width: "100%", height: "360px" }}
+              aria-hidden="true"
+              style={{ display: "block", width: "100%", height: "clamp(220px, 42vw, 360px)" }}
             />
 
             {/* overlay */}
@@ -357,18 +356,19 @@ export default function VideoIntro({ videoSrc }: { videoSrc?: string }) {
             </div>
 
             {/* bottom-right badge */}
-            <div style={{
+            <span style={{
               position: "absolute", bottom: "18px", right: "18px",
               padding: "5px 12px",
-              background: "rgb(var(--accent-rgb) / 0.08)", border: "1px solid rgb(var(--accent-rgb) / 0.22)",
+              borderRadius: "var(--r-sm)",
+              background: "rgb(var(--accent-rgb) / 0.12)", border: "1px solid rgb(var(--accent-rgb) / 0.25)",
               fontFamily: "var(--font-mono)", fontSize: "12px",
               color: "var(--accent-soft)", letterSpacing: "0.08em",
             }}>
               INTRO REEL
-            </div>
-          </div>
+            </span>
+          </button>
         </div>
-      </section>
+      </Section>
 
       {/* ════════════════════════════════
           MODAL OVERLAY

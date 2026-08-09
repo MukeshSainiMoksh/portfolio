@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { sfx } from "@/services/sounds";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 export interface TerminalData {
   skills: string[];
@@ -24,8 +25,16 @@ export default function Terminal({ data }: { data: TerminalData }) {
   const historyRef = useRef<string[]>([]);
   const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  /* open with ` (backtick), close with Escape */
+  const close = useCallback(() => {
+    setOpen(false);
+  }, []);
+
+  /* Escape + Tab cycling live in the focus trap so every overlay behaves alike */
+  useFocusTrap(panelRef, open, close);
+
+  /* open with ` (backtick) */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -34,16 +43,23 @@ export default function Terminal({ data }: { data: TerminalData }) {
         e.preventDefault();
         setOpen((o) => !o);
         sfx.click();
-      } else if (e.key === "Escape" && open) {
-        setOpen(false);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, []);
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 50);
+  }, [open]);
+
+  /* lock background scroll while the shell is open */
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   useEffect(() => {
@@ -195,6 +211,8 @@ export default function Terminal({ data }: { data: TerminalData }) {
       {/* terminal panel */}
       {open && (
         <div
+          ref={panelRef}
+          tabIndex={-1}
           role="dialog"
           aria-modal="true"
           aria-label="Visitor shell terminal"

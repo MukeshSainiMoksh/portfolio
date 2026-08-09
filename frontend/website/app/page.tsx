@@ -65,7 +65,7 @@ export default async function HomePage() {
       <Projects projects={data.projects ?? []} />
       <Certifications certs={certs} />
       <Education items={data.education ?? []} />
-      <Contact />
+      <Contact about={about} />
       <DeferredUI
         terminalData={{
           skills: (data.skills ?? []).map((s) => s.skill_name),

@@ -185,6 +185,7 @@ export default function ChatWidget() {
   const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
 
   const reduceMotion = () =>
     typeof window !== "undefined" &&
@@ -201,7 +202,12 @@ export default function ChatWidget() {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { setOpen(false); sfx.softClick(); }
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      sfx.softClick();
+      // The panel is non-modal, so focus is not trapped — but on close it
+      // still has to land somewhere sensible rather than on <body>.
+      launcherRef.current?.focus();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -264,6 +270,7 @@ export default function ChatWidget() {
     <>
       {/* ── Launcher ── */}
       <button
+        ref={launcherRef}
         onClick={() => { setOpen((o) => !o); sfx.click(); }}
         aria-label={open ? "Close AI assistant" : "Open AI assistant"}
         aria-expanded={open}

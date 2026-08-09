@@ -68,6 +68,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body>
+        {/* .reveal starts hidden and is un-hidden by an IntersectionObserver.
+            Without JS that observer never runs, so un-hide everything. */}
+        <noscript>
+          <style>{`.reveal{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
         <a href="#home" className="skip-link">Skip to content</a>
         {/* One fixed field under the whole document — every section is
             transparent so the page reads as a single surface. */}

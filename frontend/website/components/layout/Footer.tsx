@@ -3,7 +3,7 @@ export default function Footer() {
 
   return (
     <footer
-      className="relative border-t border-hairline py-10 px-4"
+      className="relative border-t border-hairline py-10"
       style={{ background: "rgb(var(--surface-0-rgb) / 0.55)" }}
     >
       <div
@@ -14,7 +14,7 @@ export default function Footer() {
         }}
       />
 
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="container-shell flex flex-col md:flex-row items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-2.5">
             <div
