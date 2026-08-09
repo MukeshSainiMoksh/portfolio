@@ -50,13 +50,28 @@ export async function fetchSiteAssets(): Promise<SiteAssets> {
   }
 }
 
+/**
+ * Admin uploads are served by the backend at /uploads/..., but the value
+ * stored in the database is a bare path. Handed straight to next/image it
+ * resolves against the *website's* origin and 404s — so a freshly uploaded
+ * certificate badge silently never appears. Anything else (an absolute URL,
+ * or a path into the website's own /public) is left alone.
+ */
+function resolveAssetUrl(url: string | null): string | null {
+  if (!url) return null;
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith("/uploads/")) return `${API_URL}${url}`;
+  return url;
+}
+
 export async function fetchCertifications(): Promise<Certification[]> {
   try {
     const res = await fetch(`${API_URL}/api/website/certifications/`, {
       next: { revalidate: REVALIDATE_SECONDS },
     });
     if (!res.ok) return [];
-    return res.json();
+    const certs: Certification[] = await res.json();
+    return certs.map((c) => ({ ...c, badge_url: resolveAssetUrl(c.badge_url) }));
   } catch {
     return []; // certifications section simply hides itself
   }
