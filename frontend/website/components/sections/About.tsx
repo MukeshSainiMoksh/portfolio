@@ -37,7 +37,7 @@ export default function About({ about }: { about: Record<string, string> }) {
   const [statsActive, setStatsActive] = useState(false);
   const statsRef = useRef<HTMLDListElement>(null);
 
-  const years = Number(about.stat_years) || 2;
+  const years = Number(about.stat_years) || 3;
   const projects = Number(about.stat_projects) || 10;
   const certs = Number(about.stat_certs) || 1;
 
@@ -67,7 +67,7 @@ export default function About({ about }: { about: Record<string, string> }) {
 
   const bio =
     about.bio ??
-    "I'm a software engineer from India with 2+ years building AI-driven products end to end — retrieval pipelines, FastAPI services, and the interfaces on top of them.";
+    "I'm a software engineer from India with 3+ years building AI-driven products end to end — retrieval pipelines, FastAPI services, and the interfaces on top of them.";
   const bioSecondary =
     about.bio_secondary ??
     "My work sits where machine learning meets production: evaluation harnesses, retrieval quality, and making inference cheap enough to actually ship. I've worked across NLP, computer vision and modern web architectures, coordinating with teams in the US.";

@@ -183,6 +183,15 @@ export default function Hero({
   const linkedinUrl = about.linkedin_url ?? "#";
   const resumeUrl   = resumeUrlProp ?? about.resume_url ?? "#";
 
+  /* Stats are admin-managed. They used to be hard-coded here while About
+     read them from the profile, so the two disagreed the moment either
+     changed. */
+  const stats = [
+    { value: `${Number(about.stat_years) || 3}+`, label: "Years experience" },
+    { value: `${Number(about.stat_projects) || 10}+`, label: "Projects shipped" },
+    { value: `${Number(about.stat_certs) || 1}`, label: "Azure certification" },
+  ];
+
   // Last word of the name carries the serif-italic emphasis.
   const nameParts = name.trim().split(/\s+/);
   const nameLead  = nameParts.slice(0, -1).join(" ");
@@ -345,11 +354,7 @@ export default function Hero({
               className="animate-fade-in-up flex flex-wrap gap-x-12 gap-y-6"
               style={{ opacity: 0, animationDelay: "0.46s" }}
             >
-              {[
-                { value: "2+",  label: "Years experience" },
-                { value: "10+", label: "Projects shipped" },
-                { value: "1",   label: "Azure certification" },
-              ].map(({ value, label }) => (
+              {stats.map(({ value, label }) => (
                 <div key={label}>
                   <dt className="sr-only">{label}</dt>
                   <dd

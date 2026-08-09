@@ -34,20 +34,41 @@ export default async function HomePage() {
     live_url: p.live_url,
     github_url: p.github_url,
   }));
+  const email = about.email || "codermsaini@gmail.com";
   const social = {
     github: about.github_url || undefined,
     linkedin: about.linkedin_url || undefined,
-    email: "codermsaini@gmail.com",
+    email,
   };
 
-  // Person schema — helps Google show rich results for the portfolio
+  /* Person schema — helps Google show rich results for the portfolio.
+     Every value comes from admin data; these used to be hard-coded, so
+     editing the profile left the structured data saying something else. */
+  const [locality, region] = (about.location ?? "")
+    .split(",")
+    .map((part) => part.trim());
+  const currentRole = (data.experience ?? []).find((e) => e.is_current);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
-    name: "Mukesh Kumar Saini",
-    jobTitle: "Software Engineer & AI Developer",
-    email: "mailto:codermsaini@gmail.com",
-    address: { "@type": "PostalAddress", addressLocality: "Mohali", addressRegion: "Punjab", addressCountry: "IN" },
+    name: hero.name || "Mukesh Kumar Saini",
+    jobTitle: hero.tagline || "Software Engineer & AI Developer",
+    email: `mailto:${email}`,
+    ...(currentRole && {
+      worksFor: { "@type": "Organization", name: currentRole.company },
+    }),
+    ...((locality || region) && {
+      address: {
+        "@type": "PostalAddress",
+        ...(locality && { addressLocality: locality }),
+        ...(region && { addressRegion: region }),
+        addressCountry: "IN",
+      },
+    }),
+    ...(about.linkedin_url || about.github_url
+      ? { sameAs: [about.linkedin_url, about.github_url].filter(Boolean) }
+      : {}),
     knowsAbout: data.skills?.map((s) => s.skill_name) ?? [],
   };
 

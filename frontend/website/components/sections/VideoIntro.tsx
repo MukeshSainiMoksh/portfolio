@@ -213,6 +213,12 @@ export default function VideoIntro({ videoSrc }: { videoSrc?: string }) {
   const [open,    setOpen]    = useState(false);
   const [closing, setClosing] = useState(false);
 
+  /* Short boot sequence between the click and the video. It also covers the
+     real cost of fetching a preload="none" video, so the wait reads as
+     intentional rather than as the page having stalled. */
+  const [phase,    setPhase]    = useState<"booting" | "playing">("booting");
+  const [progress, setProgress] = useState(0);
+
   const { playOpen, playClose } = useAudio();
 
   /* thumbnail canvas */
@@ -223,6 +229,13 @@ export default function VideoIntro({ videoSrc }: { videoSrc?: string }) {
     if (open) return;
     playOpen();
     setClosing(false);
+    setProgress(0);
+    setPhase(
+      typeof window !== "undefined" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "playing"
+        : "booting"
+    );
     setOpen(true);
   }, [open, playOpen]);
 
@@ -235,12 +248,34 @@ export default function VideoIntro({ videoSrc }: { videoSrc?: string }) {
     setTimeout(() => { setOpen(false); setClosing(false); }, 240);
   }, [open, playClose]);
 
-  /* start playback as soon as the video mounts — preload="none" means the
-     9.6 MB file is only requested from here, never on page load */
+  /* Boot sequence. Runs the counter to 100 over ~1.5s, then hands over to
+     the video. Kept on rAF rather than an interval so it tracks real time
+     if the tab throttles. */
   useEffect(() => {
-    if (!open) return;
+    if (!open || phase !== "booting") return;
+    const DURATION = 1500;
+    let raf = 0;
+    let start: number | null = null;
+
+    const step = (ts: number) => {
+      if (start === null) start = ts;
+      const t = Math.min((ts - start) / DURATION, 1);
+      // ease-out so it decelerates into 100 instead of stopping dead
+      setProgress(Math.round((1 - Math.pow(1 - t, 2)) * 100));
+      if (t < 1) raf = requestAnimationFrame(step);
+      else setPhase("playing");
+    };
+
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [open, phase]);
+
+  /* Playback starts when the boot sequence hands over — preload="none"
+     means the video file is only requested from here, never on page load */
+  useEffect(() => {
+    if (!open || phase !== "playing") return;
     videoRef.current?.play().catch(() => { /* autoplay blocked — controls remain */ });
-  }, [open]);
+  }, [open, phase]);
 
   /* Escape key */
   useEffect(() => {
@@ -262,6 +297,17 @@ export default function VideoIntro({ videoSrc }: { videoSrc?: string }) {
         @keyframes vi-pingRing { 0%{transform:scale(.9);opacity:.6} 100%{transform:scale(1.75);opacity:0} }
         @keyframes vi-fadeIn   { from{opacity:0} to{opacity:1} }
         @keyframes vi-fadeOut  { from{opacity:1} to{opacity:0} }
+
+        /* Boot sequence */
+        @keyframes vi-scan  { 0%{top:-8%} 100%{top:108%} }
+        @keyframes vi-grid  { from{background-position:0 0} to{background-position:0 34px} }
+        @keyframes vi-bootOut { from{opacity:1} to{opacity:0;visibility:hidden} }
+        @keyframes vi-blip  { 0%,100%{opacity:.35} 50%{opacity:1} }
+
+        .vi-scan  { animation: vi-scan 1.5s cubic-bezier(.4,0,.6,1) infinite; }
+        .vi-grid  { animation: vi-grid 1.1s linear infinite; }
+        .vi-boot-out { animation: vi-bootOut .45s ease-out forwards; }
+        .vi-blip  { animation: vi-blip 1s ease-in-out infinite; }
 
         .vi-play-ring-1 { animation: vi-pingRing 2.6s ease-out infinite; }
         .vi-play-ring-2 { animation: vi-pingRing 2.6s 1.3s ease-out infinite; }
@@ -448,6 +494,110 @@ export default function VideoIntro({ videoSrc }: { videoSrc?: string }) {
                   playsInline
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                 />
+
+                {/* ── BOOT SEQUENCE ──
+                    Covers the video until it is ready to play. Skipped
+                    entirely under prefers-reduced-motion. */}
+                <div
+                  aria-hidden="true"
+                  className={phase === "playing" ? "vi-boot-out" : undefined}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "18px",
+                    background: "var(--surface-0)",
+                    overflow: "hidden",
+                    pointerEvents: "none",
+                  }}
+                >
+                  {/* drifting grid */}
+                  <div
+                    className="vi-grid"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      backgroundImage:
+                        "linear-gradient(rgb(var(--accent-rgb) / 0.07) 1px, transparent 1px)," +
+                        "linear-gradient(90deg, rgb(var(--accent-rgb) / 0.07) 1px, transparent 1px)",
+                      backgroundSize: "34px 34px",
+                      maskImage: "radial-gradient(ellipse 70% 70% at 50% 50%, #000 10%, transparent 78%)",
+                      WebkitMaskImage: "radial-gradient(ellipse 70% 70% at 50% 50%, #000 10%, transparent 78%)",
+                    }}
+                  />
+
+                  {/* scan beam */}
+                  <div
+                    className="vi-scan"
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      height: "2px",
+                      background:
+                        "linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.85), transparent)",
+                      boxShadow: "0 0 22px rgb(var(--accent-rgb) / 0.55)",
+                    }}
+                  />
+
+                  {/* progress ring */}
+                  <div style={{ position: "relative", width: "92px", height: "92px" }}>
+                    <svg width="92" height="92" viewBox="0 0 92 92" style={{ transform: "rotate(-90deg)" }}>
+                      <circle
+                        cx="46" cy="46" r="34" fill="none"
+                        stroke="rgb(var(--accent-rgb) / 0.16)" strokeWidth="2"
+                      />
+                      <circle
+                        cx="46" cy="46" r="34" fill="none"
+                        stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"
+                        strokeDasharray={2 * Math.PI * 34}
+                        strokeDashoffset={2 * Math.PI * 34 * (1 - progress / 100)}
+                        style={{ filter: "drop-shadow(0 0 6px rgb(var(--accent-rgb) / 0.7))" }}
+                      />
+                    </svg>
+                    <span
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "18px",
+                        fontWeight: 500,
+                        color: "var(--text-1)",
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      {progress}
+                      <span style={{ fontSize: "12px", color: "var(--text-3)", marginLeft: "1px" }}>%</span>
+                    </span>
+                  </div>
+
+                  {/* status line */}
+                  <p
+                    className="vi-blip"
+                    style={{
+                      position: "relative",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "12px",
+                      letterSpacing: "0.16em",
+                      textTransform: "uppercase",
+                      color: "var(--accent-soft)",
+                    }}
+                  >
+                    {progress < 35
+                      ? "Initialising"
+                      : progress < 70
+                      ? "Loading stream"
+                      : progress < 99
+                      ? "Decoding"
+                      : "Ready"}
+                  </p>
+                </div>
               </div>
             </div>{/* end panel */}
           </div>

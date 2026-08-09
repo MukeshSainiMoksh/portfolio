@@ -11,11 +11,13 @@ import openai
 from fastapi import APIRouter, Depends, HTTPException
 from openai import AsyncOpenAI
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
 from core.database import get_db
 from core.ratelimit import rate_limit
+from models.certification import Certification
 from website.services.content_service import WebsiteContentService
 
 logger = logging.getLogger("portfolio.chat")
@@ -55,6 +57,13 @@ CTX_TTL = 300
 
 
 async def build_portfolio_context(db: AsyncSession) -> str:
+    """Everything the assistant is allowed to know, as plain text.
+
+    Recruiters ask a narrow set of things — how long has he worked, where is
+    he now, what has he shipped, is he certified, how do I reach him — so the
+    context leads with a QUICK FACTS block answering those directly rather
+    than making the model infer them from the sections below.
+    """
     now = monotonic()
     if _ctx_cache and now - _ctx_cache["at"] < CTX_TTL:
         return _ctx_cache["text"]
@@ -66,41 +75,136 @@ async def build_portfolio_context(db: AsyncSession) -> str:
     projects = await svc.get_projects()
     education = await svc.get_education()
 
-    lines: List[str] = []
+    # Certifications live outside WebsiteContentService. They were missing
+    # from this context entirely, so "is he certified?" — a question every
+    # recruiter asks — was answered with "I don't have that information"
+    # while the data sat in the database.
+    certs = (
+        (
+            await db.execute(
+                select(Certification)
+                .where(Certification.is_active == True)  # noqa: E712
+                .order_by(Certification.display_order)
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     sections: dict = {}
     for item in profile:
-        sections.setdefault(item.section, {})[item.field_name] = item.field_value
-    for section, fields in sections.items():
-        lines.append(f"[{section.upper()}]")
-        for k, v in fields.items():
-            if v:
-                lines.append(f"{k}: {v}")
+        if item.field_value:
+            sections.setdefault(item.section, {})[item.field_name] = item.field_value
 
+    about = sections.get("about", {})
+    hero = sections.get("hero", {})
+    contact = sections.get("contact", {})
+
+    lines: List[str] = []
+
+    # ── Quick facts ──────────────────────────────────────────────────
+    current = next((e for e in experience if e.is_current), None)
+    years = about.get("stat_years")
+
+    lines.append("[QUICK FACTS]")
+    lines.append(f"Name: {hero.get('name', 'Mukesh Kumar Saini')}")
+    if hero.get("tagline"):
+        lines.append(f"Title: {hero['tagline']}")
+    if years:
+        lines.append(f"Total professional experience: {years}+ years")
+    if current:
+        lines.append(
+            f"Currently: {current.job_title} at {current.company} (since {current.start_date})"
+        )
+    if about.get("location"):
+        lines.append(f"Based in: {about['location']}")
+    if about.get("availability"):
+        lines.append(f"Availability: {about['availability']}")
+    for key, label in (("email", "Email"), ("phone", "Phone")):
+        value = about.get(key) or contact.get(key)
+        if value:
+            lines.append(f"{label}: {value}")
+    if about.get("linkedin_url"):
+        lines.append(f"LinkedIn: {about['linkedin_url']}")
+    if about.get("github_url"):
+        lines.append(f"GitHub: {about['github_url']}")
+    lines.append(
+        f"Portfolio contains: {len(experience)} roles, {len(projects)} projects, "
+        f"{len(skills)} skills, {len(certs)} certification(s)"
+    )
+
+    # ── Profile prose ────────────────────────────────────────────────
+    if about.get("bio"):
+        lines.append("\n[BIO]")
+        lines.append(about["bio"])
+
+    # ── Skills ───────────────────────────────────────────────────────
     lines.append("\n[SKILLS]")
     by_cat: dict = {}
     for s in skills:
-        by_cat.setdefault(s.category, []).append(f"{s.skill_name} ({s.skill_level}%)")
+        # The level is a self-assessment. It is given as a coarse band so the
+        # model can say "strong in" without quoting a fake-precise percentage.
+        band = "core" if s.skill_level >= 85 else "working"
+        by_cat.setdefault(s.category, []).append(f"{s.skill_name} ({band})")
     for cat, items in by_cat.items():
         lines.append(f"{cat}: {', '.join(items)}")
 
+    # ── Experience ───────────────────────────────────────────────────
     lines.append("\n[EXPERIENCE]")
     for e in experience:
-        period = f"{e.start_date} – {e.end_date or 'Present'}"
+        period = f"{e.start_date} – {'Present' if e.is_current else (e.end_date or 'n/a')}"
         lines.append(f"- {e.job_title} at {e.company} ({period})")
+        if e.location:
+            lines.append(f"  Location: {e.location}")
         if e.description:
             lines.append(f"  {e.description}")
-        for r in (e.responsibilities or [])[:5]:
+        for r in e.responsibilities or []:
             lines.append(f"  • {r}")
+        if e.technologies:
+            lines.append(f"  Tech: {e.technologies}")
 
+    # ── Projects ─────────────────────────────────────────────────────
     lines.append("\n[PROJECTS]")
     for p in projects:
-        tech = ", ".join(p.technologies or [])
-        lines.append(f"- {p.title}: {p.tagline or p.description or ''}" + (f" [Tech: {tech}]" if tech else ""))
+        flag = " [FEATURED]" if p.is_featured else ""
+        lines.append(f"- {p.title}{flag}")
+        if p.tagline:
+            lines.append(f"  {p.tagline}")
+        if p.description:
+            lines.append(f"  {p.description}")
+        if p.technologies:
+            lines.append(f"  Tech: {', '.join(p.technologies)}")
+        for f in (p.features or [])[:4]:
+            lines.append(f"  • {f}")
+        links = []
+        if p.live_url:
+            links.append(f"live: {p.live_url}")
+        if p.github_url:
+            links.append(f"source: {p.github_url}")
+        if links:
+            lines.append(f"  Links — {', '.join(links)}")
 
+    # ── Certifications ───────────────────────────────────────────────
+    lines.append("\n[CERTIFICATIONS]")
+    if certs:
+        for c in certs:
+            span = " – ".join(x for x in (c.issue_date, c.expiry_date) if x)
+            lines.append(f"- {c.name} — issued by {c.issuer}" + (f" ({span})" if span else ""))
+            if c.credential_id:
+                lines.append(f"  Credential ID: {c.credential_id}")
+            if c.credential_url:
+                lines.append(f"  Verify at: {c.credential_url}")
+            if c.description:
+                lines.append(f"  {c.description}")
+    else:
+        lines.append("None listed.")
+
+    # ── Education ────────────────────────────────────────────────────
     lines.append("\n[EDUCATION]")
     for ed in education:
         lines.append(f"- {ed.degree}, {ed.institution} ({ed.year or 'n/a'})")
+        if ed.grade:
+            lines.append(f"  Grade: {ed.grade}")
 
     text = "\n".join(lines)
     _ctx_cache.update(text=text, at=now)
@@ -115,8 +219,22 @@ are usually recruiters, hiring managers or potential collaborators sizing him up
 - If the answer is not in the data, say so plainly in one sentence and point to the \
 [contact form](#contact). Never guess, never hedge into an invented answer.
 - Never invent or inflate a skill, project, employer, date, metric or credential.
-- Skill percentages are self-assessments. Describe strength in words ("strong in", \
-"working knowledge of") rather than quoting the number back.
+- QUICK FACTS is the authority for years of experience, current role, location, \
+availability and contact details. Use it verbatim rather than recalculating from dates.
+- Skills are tagged "core" or "working" — that is a self-assessment, so say \
+"strong in" or "has worked with" rather than implying a measured ranking.
+
+## Questions you will get most
+Recruiters and hiring managers ask a narrow set of things. Answer these crisply:
+- **How much experience?** — QUICK FACTS has the total; name the current role and employer.
+- **Is he a fit for [role]?** — map their stack onto his. Name the specific projects or \
+employers where he used each overlapping technology. Be honest about what is missing.
+- **What has he built?** — lead with FEATURED projects, say what each one does and the \
+stack, and link it if a live or source URL exists.
+- **Is he certified?** — CERTIFICATIONS has the full list with issuer and credential ID.
+- **Is he available / how do I reach him?** — QUICK FACTS has availability and email; \
+also offer the [contact form](#contact).
+- **Notice period, salary, visa status** — not in the data. Say so and point to contact.
 
 ## How to answer
 - Lead with the answer. No preamble, no "Great question!", no restating the question.

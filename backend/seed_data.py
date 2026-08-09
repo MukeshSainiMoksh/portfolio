@@ -38,16 +38,23 @@ async def seed_profile(session: AsyncSession):
 
         # About
         ("about", "bio", (
-            "I'm a qualified Software Engineer from India with 2+ years of experience, specializing in AI/ML "
-            "and full-stack development. I have hands-on expertise in Python (Django, Flask, FastAPI), "
-            ".NET Core, React, and modern AI/ML stacks including LLMs, BERT, RAG pipelines, NLP, and "
-            "computer vision. I thrive in cross-functional teams and have successfully delivered enterprise-grade "
-            "solutions while coordinating with teams in the USA."
+            "I'm a Software Engineer from India with 3+ years of experience, specializing in AI/ML, "
+            "backend development and scalable systems. I have hands-on expertise in Python "
+            "(Django, Flask, FastAPI), .NET Core, React, and modern AI/ML stacks including LLMs, BERT, "
+            "RAG pipelines, NLP and computer vision. Across my roles I've improved system performance "
+            "by 30%, reduced query load by 30% and increased user engagement by 25%, working in "
+            "cross-functional teams alongside colleagues in the USA."
         ), "textarea"),
         ("about", "location",     "Mohali, Punjab, India",      "text"),
         ("about", "email",        "codermsaini@gmail.com",       "text"),
         ("about", "phone",        "+91 8219005065",              "text"),
         ("about", "availability", "Open to Opportunities",       "text"),
+
+        # Stats — drive the hero and About counters, and the chat assistant's
+        # QUICK FACTS block. Keep in sync with the CV.
+        ("about", "stat_years",    "3",  "text"),
+        ("about", "stat_projects", "10", "text"),
+        ("about", "stat_certs",    "1",  "text"),
         ("about", "github_url",   "https://github.com/mukeshkumar",                              "url"),
         ("about", "linkedin_url", "https://linkedin.com/in/mukesh-saini-01360b17b",              "url"),
         ("about", "resume_url",   "/uploads/Mukesh_Kumar_CV.pdf",                                "url"),
