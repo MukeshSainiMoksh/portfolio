@@ -53,7 +53,7 @@ async def seed_profile(session: AsyncSession):
         # Stats — drive the hero and About counters, and the chat assistant's
         # QUICK FACTS block. Keep in sync with the CV.
         ("about", "stat_years",    "3",  "text"),
-        ("about", "stat_projects", "10", "text"),
+        ("about", "stat_projects", "11", "text"),
         ("about", "stat_certs",    "1",  "text"),
         ("about", "github_url",   "https://github.com/mukeshkumar",                              "url"),
         ("about", "linkedin_url", "https://linkedin.com/in/mukesh-saini-01360b17b",              "url"),
@@ -236,6 +236,44 @@ async def seed_experience(session: AsyncSession):
 
 async def seed_projects(session: AsyncSession):
     projects = [
+        {
+            "title":       "Wiztra AI — Enterprise AI Chatbot Platform",
+            "tagline":     "No-code SaaS that turns any website into a brand-aware AI support agent",
+            "description": (
+                "Multi-tenant SaaS platform that crawls a company's website, builds a hybrid-retrieval "
+                "knowledge base from it, and deploys an embeddable chat widget. Works like a support agent "
+                "that already knows the product — answers customers 24/7, captures leads, and takes bookings "
+                "without a human in the loop. Built as a Turborepo monorepo with a Next.js frontend, BullMQ "
+                "background workers, a Hono-based MCP microservice, and a standalone Python crawler run as a "
+                "managed subprocess."
+            ),
+            "role": "Full-Stack / AI Engineer",
+            "technologies": [
+                "Next.js", "TypeScript", "React", "PostgreSQL", "pgvector",
+                "Apache AGE", "Prisma", "Redis", "BullMQ", "Python",
+            ],
+            "features": [
+                "Hybrid RAG pipeline combining pgvector semantic search, Postgres full-text search and an "
+                "Apache AGE knowledge graph, with reranking, confidence scoring and faithfulness evaluation",
+                "Website-crawl onboarding that ingests a customer's site and auto-generates an editable AI "
+                "Site Persona — brand tone, colours and suggested starter questions",
+                "Multi-LLM router with automatic fallback (OpenAI → Cloudflare Workers AI → local Ollama) for "
+                "chat and embeddings, plus a guardrail engine for input/output safety filtering",
+                "Document ingestion pipeline: upload → S3/MinIO → Redis/BullMQ jobs → chunking, bge-m3 "
+                "embeddings and GLiNER entity extraction feeding the knowledge graph",
+                "Embeddable chat widget with in-widget Google Calendar booking, plus Slack OAuth, Shopify "
+                "sync and Gmail integrations",
+                "Agentic layer on top of RAG: multi-agent crew orchestration, a React Flow visual workflow "
+                "builder, and MCP server APIs exposing the knowledge base to external AI tools",
+            ],
+            "live_url":    None,
+            "github_url":  None,
+            "image_url":   None,
+            "icon_class":  "fas fa-comments",
+            "project_tag": "AI / Chatbot",
+            "is_featured": True,
+            "display_order": 1,
+        },
         {
             "title":       "Envisify — BERT Text Analysis",
             "tagline":     "Enterprise text analysis using fine-tuned BERT classification",
@@ -483,8 +521,10 @@ async def seed_projects(session: AsyncSession):
         },
     ]
 
-    for project in projects:
-        session.add(Project(**project))
+    # display_order follows list position, so reordering this list is enough —
+    # the per-entry values below are ignored rather than renumbered by hand.
+    for index, project in enumerate(projects, start=1):
+        session.add(Project(**{**project, "display_order": index}))
     await session.commit()
     print(f"Seeded {len(projects)} projects")
 
