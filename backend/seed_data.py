@@ -154,6 +154,9 @@ async def seed_experience(session: AsyncSession):
             ),
             "responsibilities": [
                 "Designed end-to-end AI workflows including document processing, semantic search, and LLM-powered responses",
+                "Built Wiztra AI — a multi-tenant AI chatbot SaaS that crawls a customer's website into a hybrid RAG "
+                "knowledge base (pgvector, Postgres full-text search, Apache AGE knowledge graph) and serves it through "
+                "an embeddable widget with lead capture and booking",
                 "Fine-tuned Qwen2.5-VL multimodal models using PyTorch and LoRA adapters for compliance analysis",
                 "Built RAG pipelines with PGVector and SentenceTransformers for enterprise document intelligence",
                 "Developed FastAPI backends with JWT authentication, async processing, and role-based access control",
@@ -166,7 +169,7 @@ async def seed_experience(session: AsyncSession):
                 "Delivered Wisdom-AI — RAG-powered BI platform with multi-source data ingestion and custom chatbots",
                 "Developed SDTM Issue Tracker — clinical trial quality management system with full audit trail",
             ],
-            "technologies": "Python, FastAPI, PyTorch, Qwen2.5-VL, BERT, LangChain, PGVector, React, PostgreSQL, Docker, Azure",
+            "technologies": "Python, FastAPI, PyTorch, Qwen2.5-VL, BERT, LangChain, PGVector, React, PostgreSQL, Docker, Azure, Next.js, TypeScript, Redis, BullMQ",
             "display_order": 1,
         },
         {
