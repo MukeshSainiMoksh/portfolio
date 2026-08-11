@@ -269,7 +269,7 @@ async def seed_projects(session: AsyncSession):
                 "Agentic layer on top of RAG: multi-agent crew orchestration, a React Flow visual workflow "
                 "builder, and MCP server APIs exposing the knowledge base to external AI tools",
             ],
-            "live_url":    None,
+            "live_url":    "https://chat.wiztraai.com/",
             "github_url":  None,
             "image_url":   None,
             "icon_class":  "fas fa-comments",
