@@ -169,7 +169,14 @@ class S3Storage(Storage):
             region_name=region,
             # R2 requires SigV4 and rejects the chunked-checksum defaults that
             # newer botocore versions send unless they are turned off.
-            config=Config(signature_version="s3v4", retries={"max_attempts": 3}),
+            # Path-style addressing works on every S3-compatible host we
+            # target (R2, B2, Supabase); virtual-host style breaks on
+            # Supabase, whose endpoint carries a path segment.
+            config=Config(
+                signature_version="s3v4",
+                retries={"max_attempts": 3},
+                s3={"addressing_style": "path"},
+            ),
         )
 
     def _object_key(self, key: str) -> str:
