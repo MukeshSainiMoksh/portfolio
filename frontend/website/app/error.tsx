@@ -10,17 +10,17 @@ export default function Error({ reset }: { error: Error; reset: () => void }) {
         alignItems: "center",
         justifyContent: "center",
         gap: "20px",
-        background: "#000510",
+        background: "var(--surface-0)",
         padding: "24px",
         textAlign: "center",
       }}
     >
       <p
         style={{
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: "11px",
-          color: "rgba(255,68,102,0.8)",
-          letterSpacing: "3px",
+          fontFamily: "var(--font-mono)",
+          fontSize: "12px",
+          color: "var(--ember)",
+          letterSpacing: "0.12em",
           textTransform: "uppercase",
         }}
       >
@@ -28,10 +28,10 @@ export default function Error({ reset }: { error: Error; reset: () => void }) {
       </p>
       <h1
         style={{
-          fontFamily: "'Orbitron', monospace",
-          fontWeight: 800,
+          fontFamily: "var(--font-sans)",
+          fontWeight: 700,
           fontSize: "clamp(22px, 4vw, 36px)",
-          color: "#fff",
+          color: "var(--text-1)",
           margin: 0,
         }}
       >
@@ -39,9 +39,9 @@ export default function Error({ reset }: { error: Error; reset: () => void }) {
       </h1>
       <p
         style={{
-          fontFamily: "'Syne', sans-serif",
+          fontFamily: "var(--font-sans)",
           fontSize: "14px",
-          color: "rgba(255,255,255,0.4)",
+          color: "var(--text-3)",
           maxWidth: "420px",
           lineHeight: 1.7,
         }}
@@ -51,13 +51,13 @@ export default function Error({ reset }: { error: Error; reset: () => void }) {
       <button
         onClick={reset}
         style={{
-          fontFamily: "'JetBrains Mono', monospace",
+          fontFamily: "var(--font-mono)",
           fontSize: "12px",
           letterSpacing: "2px",
           textTransform: "uppercase",
-          color: "#00f5ff",
-          background: "rgba(0,245,255,0.06)",
-          border: "1px solid rgba(0,245,255,0.35)",
+          color: "var(--accent)",
+          background: "rgb(var(--accent-rgb) / 0.06)",
+          border: "1px solid rgb(var(--accent-rgb) / 0.35)",
           padding: "12px 32px",
           cursor: "pointer",
         }}

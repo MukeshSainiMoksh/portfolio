@@ -12,6 +12,11 @@ export default function CursorGlow() {
   const haloRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Prefer `plus-lighter` where the browser supports it; the inline style
+    // keeps `screen` as the fallback (unsupported assignments are ignored).
+    if (dotRef.current)  dotRef.current.style.mixBlendMode  = "plus-lighter";
+    if (haloRef.current) haloRef.current.style.mixBlendMode = "plus-lighter";
+
     // skip entirely for reduced-motion users and touch-only devices
     if (
       window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
@@ -35,7 +40,7 @@ export default function CursorGlow() {
       haloX += (curX - haloX) * 0.1;
       haloY += (curY - haloY) * 0.1;
       if (haloRef.current) {
-        haloRef.current.style.transform = `translate(${haloX - 220}px, ${haloY - 220}px)`;
+        haloRef.current.style.transform = `translate(${haloX - 150}px, ${haloY - 150}px)`;
       }
       raf = requestAnimationFrame(loop);
     };
@@ -64,8 +69,8 @@ export default function CursorGlow() {
           position: "fixed", top: 0, left: 0,
           width: "8px", height: "8px",
           borderRadius: "50%",
-          background: "rgba(0,245,255,0.9)",
-          boxShadow: "0 0 8px rgba(0,245,255,0.8)",
+          background: "rgb(var(--accent-rgb) / 0.9)",
+          boxShadow: "0 0 8px rgb(var(--accent-rgb) / 0.8)",
           pointerEvents: "none",
           zIndex: 9999,
           opacity: 0,
@@ -78,9 +83,9 @@ export default function CursorGlow() {
         ref={haloRef}
         style={{
           position: "fixed", top: 0, left: 0,
-          width: "440px", height: "440px",
+          width: "300px", height: "300px",
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(0,245,255,0.038) 0%, rgba(168,85,247,0.018) 45%, transparent 70%)",
+          background: "radial-gradient(circle, rgb(var(--accent-rgb) / 0.019) 0%, rgb(var(--accent-soft-rgb) / 0.009) 45%, transparent 70%)",
           pointerEvents: "none",
           zIndex: 0,
           mixBlendMode: "screen",

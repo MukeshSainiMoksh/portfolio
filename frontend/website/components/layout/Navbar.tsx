@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { sfx, isMuted, toggleMute } from "@/services/sounds";
 
@@ -15,112 +15,93 @@ const navLinks = [
   { label: "Contact",       href: "#contact" },
 ];
 
+function SoundIcon({ muted }: { muted: boolean }) {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      {muted ? (
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l4-4m0 4l-4-4" />
+      ) : (
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728" />
+      )}
+    </svg>
+  );
+}
+
 export default function Navbar() {
-  const [scrolled, setScrolled]       = useState(false);
-  const [menuOpen, setMenuOpen]       = useState(false);
-  const [activeSection, setActive]    = useState("home");
-  const [muted, setMuted]             = useState(false);
+  const [scrolled, setScrolled]    = useState(false);
+  const [menuOpen, setMenuOpen]    = useState(false);
+  const [activeSection, setActive] = useState("home");
+  const [muted, setMuted]          = useState(false);
+  const rafRef = useRef(0);
 
   // read persisted mute state after mount (SSR-safe)
   useEffect(() => { setMuted(isMuted()); }, []);
 
   useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 30);
-      const ids = navLinks.map((l) => l.href.slice(1));
+    const ids = navLinks.map((l) => l.href.slice(1));
+
+    // Scroll-spy reads layout, so it must never run more than once per frame.
+    const measure = () => {
+      rafRef.current = 0;
+      setScrolled(window.scrollY > 24);
       for (const id of [...ids].reverse()) {
         const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect().top <= 120) {
+        if (el && el.getBoundingClientRect().top <= 140) {
           setActive(id);
           break;
         }
       }
     };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+
+    const onScroll = () => {
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(measure);
+    };
+
+    measure();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
+
+  // lock body scroll while the mobile drawer is open
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [menuOpen]);
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled
-          ? "border-b border-[rgba(0,245,255,0.08)]"
-          : ""
-      }`}
-      style={{
-        background: scrolled
-          ? "rgba(0, 3, 8, 0.92)"
-          : "linear-gradient(to bottom, rgba(0,3,8,0.7), transparent)",
-        backdropFilter: scrolled ? "blur(20px)" : "none",
-      }}
+      className="nav-bar fixed top-0 left-0 right-0 z-50"
+      data-scrolled={scrolled ? "true" : "false"}
+      style={{ paddingBlock: scrolled ? "10px" : "16px" }}
     >
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group" style={{ textDecoration: "none" }}>
-          <style>{`
-            @keyframes nb-spin  { from{transform:rotate(0deg)}   to{transform:rotate(360deg)}  }
-            @keyframes nb-spinR { from{transform:rotate(0deg)}   to{transform:rotate(-360deg)} }
-            @keyframes nb-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.55;transform:scale(.8)} }
-            .nb-ring { animation:nb-spin  10s linear infinite; transform-origin:36px 36px; }
-            .nb-ihex { animation:nb-spinR  6s linear infinite; transform-origin:36px 36px; }
-            .nb-core { animation:nb-pulse 2.4s ease-in-out infinite; transform-origin:36px 36px; }
-          `}</style>
-
-          {/* Geometric hex icon */}
-          <div style={{ width: "38px", height: "38px", flexShrink: 0 }}>
-            <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
-              <defs>
-                <filter id="nb-glow">
-                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                  <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-              </defs>
-              {/* outer rotating dashed ring + cardinal ticks */}
-              <g className="nb-ring">
-                <circle cx="36" cy="36" r="33" stroke="rgba(0,220,255,0.45)" strokeWidth="1" strokeDasharray="5 4"/>
-                <line x1="36" y1="2"  x2="36" y2="9"  stroke="#00dcff" strokeWidth="1.8" opacity=".85"/>
-                <line x1="36" y1="63" x2="36" y2="70" stroke="#00dcff" strokeWidth="1.8" opacity=".85"/>
-                <line x1="2"  y1="36" x2="9"  y2="36" stroke="#00dcff" strokeWidth="1.8" opacity=".85"/>
-                <line x1="63" y1="36" x2="70" y2="36" stroke="#00dcff" strokeWidth="1.8" opacity=".85"/>
-                <circle cx="36" cy="3"  r="2" fill="#00dcff"/>
-                <circle cx="36" cy="69" r="2" fill="#00dcff"/>
-                <circle cx="3"  cy="36" r="2" fill="#00dcff"/>
-                <circle cx="69" cy="36" r="2" fill="#00dcff"/>
-              </g>
-              {/* static outer hex */}
-              <polygon points="36,10 59,23 59,49 36,62 13,49 13,23"
-                stroke="rgba(0,220,255,0.22)" strokeWidth="1" fill="rgba(0,220,255,0.03)"/>
-              {/* inner counter-rotating dashed hex */}
-              <g className="nb-ihex">
-                <polygon points="36,18 52,27 52,45 36,54 20,45 20,27"
-                  stroke="rgba(0,220,255,0.14)" strokeWidth="1" fill="none" strokeDasharray="3 3"/>
-              </g>
-              {/* MK letter paths */}
-              <g filter="url(#nb-glow)">
-                <polyline points="21,44 21,27 30,37 36,27" stroke="#00dcff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <line x1="38" y1="27" x2="38" y2="44" stroke="#00dcff" strokeWidth="2.4" strokeLinecap="round"/>
-                <polyline points="38,36 46,27" stroke="#00dcff" strokeWidth="2.4" strokeLinecap="round" fill="none"/>
-                <polyline points="38,36 46,44" stroke="#00dcff" strokeWidth="2.4" strokeLinecap="round" fill="none"/>
-              </g>
-              {/* pulsing core dot */}
-              <g className="nb-core">
-                <circle cx="36" cy="36" r="4.5" fill="rgba(0,220,255,0.12)" stroke="#00dcff" strokeWidth="1.2"/>
-                <circle cx="36" cy="36" r="2"   fill="#00dcff"/>
-              </g>
-            </svg>
-          </div>
-
-          {/* Wordmark */}
+      <div className="container-shell flex items-center justify-between">
+        {/* ── Logo ── */}
+        <Link
+          href="/"
+          className="nav-logo flex items-center gap-2.5 shrink-0"
+          style={{ textDecoration: "none" }}
+          aria-label="Home"
+        >
+          <span className="nav-mark" aria-hidden="true" />
           <span
-            className="group-hover:text-[#00f5ff] transition-colors duration-300"
-            style={{ fontFamily: "'Orbitron', monospace", fontWeight: 900, fontSize: "17px", letterSpacing: "4px", color: "#fff" }}
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontWeight: 700,
+              fontSize: "16px",
+              letterSpacing: "-0.03em",
+              color: "var(--text-1)",
+            }}
           >
-            MK<span style={{ color: "#00f5ff", textShadow: "0 0 10px rgba(0,245,255,0.7)" }}>S</span>
+            MKS
           </span>
         </Link>
 
-        {/* Desktop links */}
-        <ul className="hidden lg:flex items-center gap-0.5">
+        {/* ── Desktop links ── */}
+        <ul className="hidden lg:flex items-center gap-1">
           {navLinks.map((link) => {
             const id = link.href.slice(1);
             const isActive = activeSection === id;
@@ -129,81 +110,69 @@ export default function Navbar() {
                 <a
                   href={link.href}
                   onClick={() => sfx.click()}
-                  style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: "11px",
-                    letterSpacing: "2.5px",
-                  }}
-                  className={`relative px-3.5 py-2.5 uppercase transition-all duration-200 block group ${
-                    isActive
-                      ? "text-[#00f5ff]"
-                      : "text-[rgba(255,255,255,0.5)] hover:text-white"
-                  }`}
+                  aria-current={isActive ? "true" : undefined}
+                  data-active={isActive ? "true" : "false"}
+                  className="nav-link block"
                 >
-                  {/* hover bg flash */}
-                  <span className={`absolute inset-0 transition-opacity duration-200 ${
-                    isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                  }`}
-                    style={{ background: "rgba(0,245,255,0.04)", borderBottom: "1px solid rgba(0,245,255,0.15)" }}
-                  />
-                  {/* active glow dot */}
-                  {isActive && (
-                    <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#00f5ff] shadow-[0_0_8px_#00f5ff]" />
-                  )}
-                  <span className="relative">{link.label}</span>
+                  {link.label}
                 </a>
               </li>
             );
           })}
         </ul>
 
-        {/* Sound toggle + Hire Me */}
-        <div className="hidden lg:flex items-center gap-3">
+        {/* ── Sound toggle + CTA ── */}
+        <div className="hidden lg:flex items-center gap-2.5 shrink-0">
           <button
             onClick={() => { const m = toggleMute(); setMuted(m); if (!m) sfx.softClick(); }}
             aria-label={muted ? "Unmute sounds" : "Mute sounds"}
             title={muted ? "Unmute sounds" : "Mute sounds"}
-            className="p-2 border border-[rgba(0,245,255,0.2)] text-[rgba(255,255,255,0.45)] hover:text-[#00f5ff] hover:border-[rgba(0,245,255,0.5)] transition-colors"
+            className="p-2 transition-colors"
+            style={{
+              borderRadius: "var(--r-md)",
+              border: "1px solid var(--hairline)",
+              color: "var(--text-3)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text-1)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-3)"; }}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              {muted ? (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l4-4m0 4l-4-4" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728" />
-              )}
-            </svg>
+            <SoundIcon muted={muted} />
           </button>
-          <a
-            href="#contact"
-            onClick={() => sfx.access()}
-            className="inline-flex items-center gap-2 px-5 py-2 border border-[rgba(0,245,255,0.35)] bg-[rgba(0,245,255,0.06)] text-[#00f5ff] transition-all duration-200 hover:bg-[rgba(0,245,255,0.12)] hover:border-[#00f5ff] hover:shadow-[0_0_20px_rgba(0,245,255,0.15)]"
-            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", letterSpacing: "2px", textTransform: "uppercase" }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88] shadow-[0_0_6px_#00ff88] animate-pulse" />
+
+          <a href="#contact" onClick={() => sfx.access()} className="btn-cosmic" style={{ padding: "9px 18px" }}>
             Hire Me
           </a>
         </div>
 
-        {/* Mobile toggle */}
+        {/* ── Mobile toggle ── */}
         <button
-          className="lg:hidden text-[rgba(255,255,255,0.5)] hover:text-[#00f5ff] p-2 transition-colors"
+          className="lg:hidden p-2 transition-colors"
+          style={{ color: "var(--text-2)", borderRadius: "var(--r-md)" }}
           onClick={() => { setMenuOpen(!menuOpen); sfx.softClick(); }}
-          aria-label="Toggle menu"
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={menuOpen}
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             {menuOpen
               ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-              : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+              : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 7h16M4 12h16M4 17h16" />
             }
           </svg>
         </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* ── Mobile drawer ── */}
       {menuOpen && (
         <div
-          className="lg:hidden border-t border-[rgba(0,245,255,0.08)] px-6 py-4 space-y-1"
-          style={{ background: "rgba(0, 3, 8, 0.97)", backdropFilter: "blur(20px)" }}
+          /* Attached to the bar, not floating beside it. */
+          className="lg:hidden mt-[10px] px-4 pb-4 pt-2"
+          style={{
+            background: "rgb(var(--surface-0-rgb) / 0.94)",
+            borderTop: "1px solid var(--hairline)",
+            backdropFilter: "blur(20px) saturate(1.7)",
+            WebkitBackdropFilter: "blur(20px) saturate(1.7)",
+            boxShadow: "0 16px 32px -24px rgb(0 0 0 / 0.95)",
+          }}
         >
           {navLinks.map((link) => {
             const id = link.href.slice(1);
@@ -213,36 +182,35 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 onClick={() => { setMenuOpen(false); sfx.click(); }}
-                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", letterSpacing: "2.5px" }}
-                className={`block py-3 px-3 uppercase transition-colors border-b border-[rgba(0,245,255,0.06)] ${
-                  isActive ? "text-[#00f5ff]" : "text-[rgba(255,255,255,0.5)] hover:text-[#00f5ff]"
-                }`}
+                aria-current={isActive ? "true" : undefined}
+                data-active={isActive ? "true" : "false"}
+                className="nav-link flex items-center gap-2.5"
+                style={{ padding: "12px 14px", fontSize: "15px" }}
               >
-                {isActive && <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#00f5ff] shadow-[0_0_6px_#00f5ff] mr-2 align-middle" />}
                 {link.label}
               </a>
             );
           })}
-          <div className="pt-3 flex items-center gap-3">
+
+          <div className="pt-3 flex items-center gap-2.5">
             <a
               href="#contact"
               onClick={() => { setMenuOpen(false); sfx.access(); }}
-              className="flex-1 flex justify-center btn-neural py-3"
+              className="btn-cosmic flex-1 justify-center"
             >
               Hire Me
             </a>
             <button
               onClick={() => { const m = toggleMute(); setMuted(m); if (!m) sfx.softClick(); }}
               aria-label={muted ? "Unmute sounds" : "Mute sounds"}
-              className="p-3 border border-[rgba(0,245,255,0.2)] text-[rgba(255,255,255,0.45)] hover:text-[#00f5ff] transition-colors"
+              className="p-3 transition-colors"
+              style={{
+                borderRadius: "var(--r-md)",
+                border: "1px solid var(--hairline)",
+                color: "var(--text-3)",
+              }}
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                {muted ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l4-4m0 4l-4-4" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728" />
-                )}
-              </svg>
+              <SoundIcon muted={muted} />
             </button>
           </div>
         </div>

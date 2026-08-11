@@ -9,21 +9,19 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-import aiofiles
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
-from core.config import settings
 from core.security import get_current_admin_user
+from core.storage import get_storage, spooled_copy
 
 logger = logging.getLogger("portfolio.assets")
 
 router = APIRouter()
 
-SITE_DIR = Path(settings.UPLOAD_DIR) / "site"
-
-RESUME_NAME = "resume.pdf"
-VIDEO_NAME = "intro-video.mp4"
+# Storage keys. Fixed names so the public URL is stable across replacements.
+RESUME_NAME = "site/resume.pdf"
+VIDEO_NAME = "site/intro-video.mp4"
 
 RESUME_MAX = 10 * 1024 * 1024    # 10MB
 VIDEO_MAX = 100 * 1024 * 1024    # 100MB
@@ -46,22 +44,23 @@ class AssetsStatus(BaseModel):
     intro_video: AssetInfo
 
 
-def asset_info(filename: str) -> AssetInfo:
-    path = SITE_DIR / filename
-    if not path.exists():
+async def asset_info(key: str) -> AssetInfo:
+    storage = get_storage()
+    stored = await storage.stat(key)
+    if stored is None:
         return AssetInfo(exists=False)
-    stat = path.stat()
+    # ?v= busts caches when the file is replaced under the same stable name
     return AssetInfo(
         exists=True,
-        url=f"/uploads/site/{filename}?v={int(stat.st_mtime)}",
-        size_bytes=stat.st_size,
-        updated_at=stat.st_mtime,
+        url=f"{storage.url(key)}?v={int(stored.modified_at)}",
+        size_bytes=stored.size,
+        updated_at=stored.modified_at,
     )
 
 
 async def save_asset(
     file: UploadFile,
-    target_name: str,
+    key: str,
     allowed_exts: set,
     max_size: int,
 ) -> AssetInfo:
@@ -75,42 +74,39 @@ async def save_asset(
             detail=f"File type not allowed. Allowed: {', '.join(sorted(allowed_exts))}",
         )
 
-    SITE_DIR.mkdir(parents=True, exist_ok=True)
-    tmp_path = SITE_DIR / f".{target_name}.tmp"
-    final_path = SITE_DIR / target_name
-
+    # Buffer the whole upload before writing, so exceeding the limit never
+    # leaves a truncated file at the stable public URL.
     size = 0
+    buffer = spooled_copy()
     try:
-        async with aiofiles.open(tmp_path, "wb") as out:
-            while chunk := await file.read(CHUNK):
-                size += len(chunk)
-                if size > max_size:
-                    raise HTTPException(
-                        status_code=413,
-                        detail=f"File too large. Maximum is {max_size // (1024*1024)}MB",
-                    )
-                await out.write(chunk)
+        while chunk := await file.read(CHUNK):
+            size += len(chunk)
+            if size > max_size:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File too large. Maximum is {max_size // (1024*1024)}MB",
+                )
+            buffer.write(chunk)
 
-        # atomic-ish replace so the public URL never serves a half-written file
-        tmp_path.replace(final_path)
-        logger.info("Site asset updated: %s (%d bytes)", target_name, size)
-        return asset_info(target_name)
+        await get_storage().save(key, buffer, file.content_type)
+        logger.info("Site asset updated: %s (%d bytes)", key, size)
+        return await asset_info(key)
 
     except HTTPException:
-        tmp_path.unlink(missing_ok=True)
         raise
     except Exception:
-        logger.exception("Asset upload failed for %s", target_name)
-        tmp_path.unlink(missing_ok=True)
+        logger.exception("Asset upload failed for %s", key)
         raise HTTPException(status_code=500, detail="Upload failed")
+    finally:
+        buffer.close()
 
 
 @router.get("/", response_model=AssetsStatus)
 async def get_assets_status(current_user=Depends(get_current_admin_user)):
     """Current status of resume and intro video"""
     return AssetsStatus(
-        resume=asset_info(RESUME_NAME),
-        intro_video=asset_info(VIDEO_NAME),
+        resume=await asset_info(RESUME_NAME),
+        intro_video=await asset_info(VIDEO_NAME),
     )
 
 

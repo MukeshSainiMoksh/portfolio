@@ -7,12 +7,8 @@ import Projects from "@/components/sections/Projects";
 import Certifications from "@/components/sections/Certifications";
 import Education from "@/components/sections/Education";
 import Contact from "@/components/sections/Contact";
-import Terminal from "@/components/ui/Terminal";
-import CommandPalette from "@/components/ui/CommandPalette";
-import ChatWidget from "@/components/ui/ChatWidget";
+import DeferredUI from "@/components/ui/DeferredUI";
 import { fetchPortfolioData, fetchCertifications, fetchSiteAssets } from "@/services/portfolio";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // Next.js requires a literal here — keep in sync with REVALIDATE_SECONDS in services/portfolio.ts
 export const revalidate = 300;
@@ -25,8 +21,10 @@ export default async function HomePage() {
   ]);
 
   // admin-uploaded assets win over bundled fallbacks
-  const resumeUrl = assets.resume.url ? `${API_URL}${assets.resume.url}` : undefined;
-  const introVideoUrl = assets.intro_video.url ? `${API_URL}${assets.intro_video.url}` : undefined;
+  // fetchSiteAssets already returns browser-ready URLs — absolute when the
+  // backend stores to S3/R2, API-prefixed when it stores to local disk.
+  const resumeUrl = assets.resume.url ?? undefined;
+  const introVideoUrl = assets.intro_video.url ?? undefined;
 
   const hero = data.profile?.hero ?? {};
   const about = data.profile?.about ?? {};
@@ -36,20 +34,41 @@ export default async function HomePage() {
     live_url: p.live_url,
     github_url: p.github_url,
   }));
+  const email = about.email || "codermsaini@gmail.com";
   const social = {
     github: about.github_url || undefined,
     linkedin: about.linkedin_url || undefined,
-    email: "codermsaini@gmail.com",
+    email,
   };
 
-  // Person schema — helps Google show rich results for the portfolio
+  /* Person schema — helps Google show rich results for the portfolio.
+     Every value comes from admin data; these used to be hard-coded, so
+     editing the profile left the structured data saying something else. */
+  const [locality, region] = (about.location ?? "")
+    .split(",")
+    .map((part) => part.trim());
+  const currentRole = (data.experience ?? []).find((e) => e.is_current);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
-    name: "Mukesh Kumar Saini",
-    jobTitle: "Software Engineer & AI Developer",
-    email: "mailto:codermsaini@gmail.com",
-    address: { "@type": "PostalAddress", addressLocality: "Mohali", addressRegion: "Punjab", addressCountry: "IN" },
+    name: hero.name || "Mukesh Kumar Saini",
+    jobTitle: hero.tagline || "Software Engineer & AI Developer",
+    email: `mailto:${email}`,
+    ...(currentRole && {
+      worksFor: { "@type": "Organization", name: currentRole.company },
+    }),
+    ...((locality || region) && {
+      address: {
+        "@type": "PostalAddress",
+        ...(locality && { addressLocality: locality }),
+        ...(region && { addressRegion: region }),
+        addressCountry: "IN",
+      },
+    }),
+    ...(about.linkedin_url || about.github_url
+      ? { sameAs: [about.linkedin_url, about.github_url].filter(Boolean) }
+      : {}),
     knowsAbout: data.skills?.map((s) => s.skill_name) ?? [],
   };
 
@@ -67,16 +86,16 @@ export default async function HomePage() {
       <Projects projects={data.projects ?? []} />
       <Certifications certs={certs} />
       <Education items={data.education ?? []} />
-      <Contact />
-      <Terminal
-        data={{
+      <Contact about={about} />
+      <DeferredUI
+        terminalData={{
           skills: (data.skills ?? []).map((s) => s.skill_name),
           projects: projectLinks,
           social,
         }}
+        projects={projectLinks}
+        social={social}
       />
-      <CommandPalette projects={projectLinks} social={social} />
-      <ChatWidget />
     </>
   );
 }

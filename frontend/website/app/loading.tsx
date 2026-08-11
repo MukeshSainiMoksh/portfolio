@@ -8,25 +8,25 @@ export default function Loading() {
         alignItems: "center",
         justifyContent: "center",
         gap: "18px",
-        background: "#000510",
+        background: "var(--surface-0)",
       }}
     >
       <div
         style={{
           width: "42px",
           height: "42px",
-          border: "2px solid rgba(0,245,255,0.12)",
-          borderTopColor: "#00f5ff",
+          border: "2px solid rgb(var(--accent-rgb) / 0.12)",
+          borderTopColor: "var(--accent)",
           borderRadius: "50%",
           animation: "spin 0.8s linear infinite",
         }}
       />
       <p
         style={{
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: "10px",
-          color: "rgba(0,245,255,0.5)",
-          letterSpacing: "4px",
+          fontFamily: "var(--font-mono)",
+          fontSize: "12px",
+          color: "var(--accent-soft)",
+          letterSpacing: "0.12em",
           textTransform: "uppercase",
         }}
       >

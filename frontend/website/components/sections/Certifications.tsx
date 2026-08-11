@@ -1,231 +1,217 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Section from "@/components/ui/Section";
+import Reveal from "@/components/ui/Reveal";
 import type { Certification } from "@/services/portfolio";
+import { formatMonthYear } from "@/lib/format";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 import { sfx } from "@/services/sounds";
 
 export default function Certifications({ certs }: { certs: Certification[] }) {
-  const [lightbox, setLightbox]   = useState<string | null>(null);
+  /* The whole certificate is held, not just its image URL. The caption used
+     to be a hard-coded Azure string, so every certificate in the lightbox
+     claimed to be the same one. */
+  const [preview, setPreview] = useState<Certification | null>(null);
+  const lastTrigger = useRef<HTMLElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
-  /* close lightbox on Escape */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { sfx.shutdown(); setLightbox(null); } };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+  const open = useCallback((cert: Certification, trigger: HTMLElement) => {
+    lastTrigger.current = trigger;
+    setPreview(cert);
+    sfx.hologram();
   }, []);
+
+  const close = useCallback(() => {
+    setPreview(null);
+    sfx.shutdown();
+    // send focus back where it came from, or it lands on <body>
+    lastTrigger.current?.focus();
+  }, []);
+
+  useFocusTrap(dialogRef, preview !== null, close);
+
+  useEffect(() => {
+    if (!preview) return;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, [preview]);
 
   if (certs.length === 0) return null;
 
   return (
-    <section id="certifications" className="py-24" style={{ background: "#04000a" }}>
-      <div className="max-w-5xl mx-auto px-6">
-        <p className="section-label" style={{ color: "#a855f7" }}>Credentials</p>
-        <h2 className="section-title">Certifications</h2>
-        <div className="section-divider" style={{ background: "linear-gradient(90deg, #a855f7, transparent)" }} />
+    <Section
+      id="certifications"
+      eyebrow="Credentials"
+      title="Certifications"
+      width="text"
+    >
+      <ul className="grid gap-4 md:grid-cols-2">
+        {certs.map((cert, idx) => {
+          const dates = [
+            cert.issue_date && `Issued ${formatMonthYear(cert.issue_date)}`,
+            cert.expiry_date && `Expires ${formatMonthYear(cert.expiry_date)}`,
+          ].filter(Boolean) as string[];
 
-        <div className="grid md:grid-cols-2 gap-5">
-          {certs.map((cert, idx) => (
-            <div
-              key={cert.id}
-              className="animate-fade-in-up group relative overflow-hidden transition-all duration-300 hover:-translate-y-1"
-              style={{
-                opacity: 0,
-                animationDelay: `${idx * 0.15}s`,
-                background: "rgba(168,85,247,0.02)",
-                border: "1px solid rgba(168,85,247,0.1)",
-                borderLeft: "2px solid rgba(168,85,247,0.5)",
-                padding: "24px",
-              }}
-            >
-              {/* BG glow */}
-              <div
-                className="absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl pointer-events-none"
-                style={{ background: "rgba(168,85,247,0.04)" }}
-              />
-
-              <div className="flex items-start gap-4 relative">
-                {/* Badge icon / thumbnail */}
-                {cert.badge_url ? (
-                  <button
-                    onClick={() => { sfx.hologram(); setLightbox(cert.badge_url!); }}
-                    className="w-16 h-16 shrink-0 overflow-hidden transition-all duration-300 hover:scale-105 focus:outline-none"
-                    style={{ border: "1px solid rgba(168,85,247,0.3)", background: "rgba(168,85,247,0.06)" }}
-                    title="View certificate"
-                  >
-                    <Image
-                      src={cert.badge_url}
-                      alt={`${cert.name} certificate`}
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ) : (
-                  <div
-                    className="w-14 h-14 flex items-center justify-center shrink-0 animate-pulse-glow"
-                    style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.3)" }}
-                  >
-                    <svg className="w-7 h-7" style={{ color: "#a855f7" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                        d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-                      />
-                    </svg>
-                  </div>
-                )}
-
-                <div className="flex-1 min-w-0">
-                  <h3
-                    className="font-bold text-base leading-snug mb-1"
-                    style={{ color: "rgba(255,255,255,0.9)", fontFamily: "'Syne', sans-serif" }}
-                  >
-                    {cert.name}
-                  </h3>
-                  <p
-                    className="font-medium text-sm mb-2"
-                    style={{ color: "#a855f7", fontFamily: "'Syne', sans-serif" }}
-                  >
-                    {cert.issuer}
-                  </p>
-
-                  {cert.description && (
-                    <p
-                      className="text-sm leading-relaxed mb-3 line-clamp-2"
-                      style={{ color: "rgba(255,255,255,0.35)", fontFamily: "'Syne', sans-serif" }}
+          return (
+            <Reveal as="li" key={cert.id} delay={Math.min(idx, 4) * 0.06}>
+              <article className="card card-interactive flex h-full flex-col">
+                <div className="flex items-start gap-4">
+                  {cert.badge_url ? (
+                    <button
+                      type="button"
+                      onClick={(e) => open(cert, e.currentTarget)}
+                      className="shrink-0 overflow-hidden"
+                      style={{
+                        width: "56px",
+                        height: "56px",
+                        borderRadius: "var(--r-md)",
+                        border: "1px solid rgb(var(--accent-rgb) / 0.28)",
+                        background: "rgb(var(--accent-rgb) / 0.08)",
+                        cursor: "zoom-in",
+                      }}
+                      aria-label={`Enlarge the ${cert.name} certificate`}
                     >
-                      {cert.description}
-                    </p>
+                      <Image
+                        src={cert.badge_url}
+                        alt=""
+                        width={56}
+                        height={56}
+                        sizes="56px"
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      className="flex shrink-0 items-center justify-center"
+                      style={{
+                        width: "56px",
+                        height: "56px",
+                        borderRadius: "var(--r-md)",
+                        background: "rgb(var(--accent-rgb) / 0.1)",
+                        border: "1px solid rgb(var(--accent-rgb) / 0.22)",
+                      }}
+                    >
+                      <svg className="h-6 w-6" style={{ color: "var(--accent-soft)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </span>
                   )}
 
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                    {cert.issue_date && (
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(255,255,255,0.3)" }}>
-                        Issued {cert.issue_date}
-                      </span>
-                    )}
-                    {cert.expiry_date && (
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(255,255,255,0.3)" }}>
-                        Expires {cert.expiry_date}
-                      </span>
-                    )}
+                  <div className="min-w-0 flex-1">
+                    <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text-1)", lineHeight: 1.35 }}>
+                      {cert.name}
+                    </h3>
+                    <p className="mt-1" style={{ color: "var(--accent-soft)", fontSize: "0.875rem" }}>
+                      {cert.issuer}
+                    </p>
+
+                    {dates.length > 0 && <p className="meta mt-2.5">{dates.join(" · ")}</p>}
+
                     {cert.credential_id && (
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(168,85,247,0.5)" }}>
-                        ID: {cert.credential_id}
-                      </span>
+                      <p className="meta mt-1" style={{ overflowWrap: "anywhere" }}>
+                        ID {cert.credential_id}
+                      </p>
                     )}
                   </div>
                 </div>
-              </div>
 
-              {/* Action row */}
-              <div className="mt-5 pt-4 flex flex-wrap gap-3" style={{ borderTop: "1px solid rgba(168,85,247,0.1)" }}>
-                {cert.badge_url && (
-                  <button
-                    onClick={() => { sfx.hologram(); setLightbox(cert.badge_url!); }}
-                    style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: "10px",
-                      letterSpacing: "2px",
-                      textTransform: "uppercase",
-                      padding: "8px 18px",
-                      background: "rgba(168,85,247,0.04)",
-                      border: "1px solid rgba(168,85,247,0.2)",
-                      color: "rgba(168,85,247,0.6)",
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    View Certificate
-                  </button>
+                {cert.description && (
+                  <p className="mt-4" style={{ color: "var(--text-2)", fontSize: "0.875rem", lineHeight: 1.65 }}>
+                    {cert.description}
+                  </p>
                 )}
-                {cert.credential_url && (
-                  <a
-                    href={cert.credential_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => sfx.access()}
-                    style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: "10px",
-                      letterSpacing: "2px",
-                      textTransform: "uppercase",
-                      padding: "8px 18px",
-                      background: "rgba(168,85,247,0.06)",
-                      border: "1px solid rgba(168,85,247,0.3)",
-                      color: "#a855f7",
-                      textDecoration: "none",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      transition: "all 0.2s",
-                    }}
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                    Verify Credential
-                  </a>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Lightbox */}
-      {lightbox && (
+                {(cert.badge_url || cert.credential_url) && (
+                  <div
+                    className="mt-auto flex flex-wrap gap-2 pt-5"
+                    style={{ borderTop: "1px solid var(--hairline)" }}
+                  >
+                    {cert.badge_url && (
+                      <button
+                        type="button"
+                        className="btn-quiet"
+                        onClick={(e) => open(cert, e.currentTarget)}
+                      >
+                        View certificate
+                      </button>
+                    )}
+                    {cert.credential_url && (
+                      <a
+                        href={cert.credential_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-quiet"
+                        onClick={() => sfx.access()}
+                        aria-label={`Verify the ${cert.name} credential (opens in a new tab)`}
+                      >
+                        Verify
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    )}
+                  </div>
+                )}
+              </article>
+            </Reveal>
+          );
+        })}
+      </ul>
+
+      {/* ── Lightbox ── */}
+      {preview?.badge_url && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.92)", backdropFilter: "blur(12px)" }}
-          onClick={() => { sfx.shutdown(); setLightbox(null); }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${preview.name} certificate`}
+          style={{
+            background: "rgb(var(--surface-0-rgb) / 0.92)",
+            backdropFilter: "blur(14px)",
+            WebkitBackdropFilter: "blur(14px)",
+          }}
+          onClick={close}
         >
-          <div
-            className="relative max-w-3xl w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close */}
+          <div ref={dialogRef} className="relative w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
             <button
-              onClick={() => { sfx.shutdown(); setLightbox(null); }}
-              className="absolute -top-10 right-0 flex items-center gap-2 transition-colors"
-              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(255,255,255,0.4)", letterSpacing: "2px", textTransform: "uppercase" }}
+              type="button"
+              onClick={close}
+              className="btn-quiet absolute -top-12 right-0"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              Close [ Esc ]
+              Close
+              <span className="meta" style={{ color: "inherit", opacity: 0.7 }}>Esc</span>
             </button>
 
-            {/* Certificate image */}
             <div
               className="overflow-hidden"
-              style={{ border: "1px solid rgba(168,85,247,0.3)", boxShadow: "0 0 60px rgba(168,85,247,0.2)" }}
+              style={{
+                border: "1px solid var(--hairline-strong)",
+                borderRadius: "var(--r-lg)",
+                boxShadow: "var(--shadow-lg)",
+              }}
             >
               <Image
-                src={lightbox}
-                alt="Certificate"
+                src={preview.badge_url}
+                alt={`${preview.name} certificate issued by ${preview.issuer}`}
                 width={900}
                 height={640}
-                className="w-full h-auto"
+                sizes="(max-width: 800px) 92vw, 768px"
+                className="h-auto w-full"
                 priority
               />
             </div>
 
-            {/* Caption */}
-            <p
-              className="text-center mt-4"
-              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(168,85,247,0.5)", letterSpacing: "2px" }}
-            >
-              Microsoft Certified: Azure AI Engineer Associate · ID: A76EDCB4BBE3F103
+            <p className="meta mt-4 text-center">
+              {[preview.name, preview.credential_id && `ID ${preview.credential_id}`]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
           </div>
         </div>
       )}
-    </section>
+    </Section>
   );
 }

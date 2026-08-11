@@ -1,4 +1,6 @@
-"use client";
+import Section from "@/components/ui/Section";
+import Reveal from "@/components/ui/Reveal";
+import { formatDateRange } from "@/lib/format";
 
 interface Experience {
   id: number;
@@ -14,130 +16,124 @@ interface Experience {
 }
 
 export default function Experience({ items }: { items: Experience[] }) {
-
   return (
-    <section id="experience" className="py-24" style={{ background: "#000510" }}>
-      <div className="max-w-5xl mx-auto px-6">
-        <p className="section-label">My Journey</p>
-        <h2 className="section-title">Work Experience</h2>
-        <div className="section-divider" />
+    <Section
+      id="experience"
+      eyebrow="Experience"
+      title="Where I've worked"
+      lede="Roles, and the things I actually shipped in them."
+      width="text"
+    >
+      {items.length === 0 ? (
+        <p className="empty-state">No experience has been added yet.</p>
+      ) : (
+        <ol className="relative space-y-5">
+          {/* Spine. Sits behind the markers and fades out at the end so the
+              timeline stops rather than being cut off. */}
+          <div
+            aria-hidden="true"
+            className="absolute left-[7px] top-3 bottom-3 w-px"
+            style={{
+              background:
+                "linear-gradient(to bottom, rgb(var(--accent-rgb) / 0.4), rgb(var(--accent-rgb) / 0.15) 65%, transparent)",
+            }}
+          />
 
-        {items.length === 0 ? (
-          <p
-            className="text-center py-20 uppercase tracking-widest"
-            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", color: "rgba(0,245,255,0.3)" }}
-          >
-            No experience added yet.
-          </p>
-        ) : (
-          <div className="relative">
-            {/* Timeline line */}
-            <div
-              className="absolute left-3 top-2 bottom-2 w-px md:left-8"
-              style={{ background: "linear-gradient(to bottom, #00f5ff40, #a855f720, transparent)" }}
-            />
+          {items.map((item, idx) => {
+            const period = formatDateRange(item.start_date, item.end_date, item.is_current);
+            const tech = (item.technologies ?? "")
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean);
 
-            <div className="space-y-8">
-              {items.map((item, idx) => (
-                <div
-                  key={item.id}
-                  className="relative pl-10 md:pl-24 animate-fade-in-up"
-                  style={{ opacity: 0, animationDelay: `${idx * 0.15}s` }}
-                >
-                  {/* Timeline dot */}
-                  <div className="absolute left-3 top-4 md:left-8 -translate-x-1/2 flex items-center justify-center">
-                    <div
-                      className="w-3 h-3 rounded-full animate-pulse-glow"
-                      style={{ background: item.is_current ? "#00ff88" : "#00f5ff", boxShadow: `0 0 8px ${item.is_current ? "#00ff88" : "#00f5ff"}` }}
-                    />
-                  </div>
+            return (
+              <Reveal as="li" key={item.id} delay={Math.min(idx, 4) * 0.06} className="relative pl-8">
+                {/* Marker */}
+                <span
+                  aria-hidden="true"
+                  className="absolute left-0 top-6"
+                  style={{
+                    width: "15px",
+                    height: "15px",
+                    borderRadius: "50%",
+                    background: "var(--surface-0)",
+                    border: `2px solid ${item.is_current ? "var(--success)" : "rgb(var(--accent-rgb) / 0.6)"}`,
+                    boxShadow: item.is_current
+                      ? "0 0 0 4px rgb(var(--success-rgb) / 0.14)"
+                      : "0 0 0 4px rgb(var(--accent-rgb) / 0.08)",
+                  }}
+                />
 
-                  {/* Card */}
-                  <div
-                    className="p-6 transition-all duration-300 hover:-translate-y-0.5"
-                    style={{
-                      background: "rgba(0,245,255,0.02)",
-                      border: "1px solid rgba(0,245,255,0.08)",
-                      borderLeft: `2px solid ${item.is_current ? "#00ff88" : "#00f5ff"}40`,
-                    }}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-                      <div>
-                        <h3
-                          className="text-white font-bold text-lg leading-tight"
-                          style={{ fontFamily: "'Syne', sans-serif" }}
-                        >
-                          {item.job_title}
-                        </h3>
-                        <p
-                          className="font-semibold mt-0.5"
-                          style={{ color: "#00f5ff", fontFamily: "'Syne', sans-serif", fontSize: "14px" }}
-                        >
-                          {item.company}
-                        </p>
+                <article className="card card-interactive">
+                  <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <h3 style={{ fontSize: "var(--step-h3)", fontWeight: 600, color: "var(--text-1)" }}>
+                        {item.job_title}
+                      </h3>
+                      <p className="mt-1" style={{ color: "var(--accent-soft)", fontSize: "0.9375rem", fontWeight: 500 }}>
+                        {item.company}
                         {item.location && (
-                          <p
-                            className="mt-1 uppercase tracking-widest"
-                            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "9px", color: "rgba(255,255,255,0.3)" }}
-                          >
-                            {item.location}
-                          </p>
+                          <span style={{ color: "var(--text-3)", fontWeight: 400 }}> · {item.location}</span>
                         )}
-                      </div>
-                      <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
-                        {item.is_current && (
-                          <span className="badge-current flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88] animate-pulse" />
-                            Current
-                          </span>
-                        )}
-                        <span
-                          style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(255,255,255,0.3)" }}
-                        >
-                          {item.start_date} — {item.is_current ? "Present" : item.end_date}
-                        </span>
-                      </div>
+                      </p>
                     </div>
 
-                    {item.description && (
-                      <p
-                        className="leading-relaxed mb-4"
-                        style={{ color: "rgba(255,255,255,0.45)", fontSize: "14px", fontFamily: "'Syne', sans-serif" }}
-                      >
-                        {item.description}
-                      </p>
-                    )}
-
-                    {item.responsibilities && item.responsibilities.length > 0 && (
-                      <ul className="space-y-2 mb-4">
-                        {item.responsibilities.slice(0, 4).map((r, i) => (
-                          <li key={i} className="flex items-start gap-3">
-                            <span style={{ color: "#00f5ff", marginTop: "2px", flexShrink: 0, fontSize: "10px" }}>▸</span>
-                            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", fontFamily: "'Syne', sans-serif", lineHeight: "1.6" }}>
-                              {r}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {item.technologies && (
-                      <div
-                        className="flex flex-wrap gap-2 pt-3"
-                        style={{ borderTop: "1px solid rgba(0,245,255,0.06)" }}
-                      >
-                        {item.technologies.split(",").map((t) => (
-                          <span key={t} className="badge-tech">{t.trim()}</span>
-                        ))}
-                      </div>
-                    )}
+                    <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end">
+                      {item.is_current && (
+                        <span className="badge-current">
+                          <span className="glow-dot" style={{ width: 6, height: 6, boxShadow: "none" }} />
+                          Current
+                        </span>
+                      )}
+                      {period && <span className="meta">{period}</span>}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
+
+                  {item.description && (
+                    <p style={{ color: "var(--text-2)", fontSize: "0.9375rem", lineHeight: 1.7 }}>
+                      {item.description}
+                    </p>
+                  )}
+
+                  {item.responsibilities && item.responsibilities.length > 0 && (
+                    <ul className="mt-4 space-y-2.5">
+                      {item.responsibilities.map((r, i) => (
+                        <li key={`${item.id}-r-${i}`} className="flex gap-3">
+                          <span
+                            aria-hidden="true"
+                            className="mt-[9px] shrink-0"
+                            style={{
+                              width: "5px",
+                              height: "5px",
+                              borderRadius: "50%",
+                              background: "rgb(var(--accent-rgb) / 0.8)",
+                            }}
+                          />
+                          <span style={{ color: "var(--text-2)", fontSize: "0.9375rem", lineHeight: 1.65 }}>
+                            {r}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {tech.length > 0 && (
+                    <ul
+                      className="mt-5 flex flex-wrap gap-2 pt-4"
+                      style={{ borderTop: "1px solid var(--hairline)" }}
+                      aria-label={`Technologies used at ${item.company}`}
+                    >
+                      {tech.map((t, i) => (
+                        <li key={`${item.id}-t-${i}`} className="chip">{t}</li>
+                      ))}
+                    </ul>
+                  )}
+                </article>
+              </Reveal>
+            );
+          })}
+        </ol>
+      )}
+    </Section>
   );
 }

@@ -41,7 +41,12 @@ export async function fetchSiteAssets(): Promise<SiteAssets> {
       next: { revalidate: REVALIDATE_SECONDS },
     });
     if (!res.ok) throw new Error(String(res.status));
-    return res.json();
+    const assets: SiteAssets = await res.json();
+    // Hand back ready-to-use URLs so callers never build them by hand.
+    return {
+      resume: { ...assets.resume, url: resolveAssetUrl(assets.resume.url) },
+      intro_video: { ...assets.intro_video, url: resolveAssetUrl(assets.intro_video.url) },
+    };
   } catch {
     return {
       resume: { exists: false, url: null },
@@ -50,13 +55,31 @@ export async function fetchSiteAssets(): Promise<SiteAssets> {
   }
 }
 
+/**
+ * Turns whatever the backend reports into a URL the browser can actually use.
+ *
+ * With STORAGE_BACKEND=local the API returns a bare "/uploads/..." path, which
+ * next/image would resolve against the *website's* origin and 404 on — so a
+ * freshly uploaded certificate badge silently never appears. With an S3/R2
+ * backend it already returns an absolute URL, which must be left alone (the
+ * old code prefixed everything, producing "http://apihttps://bucket/...").
+ * Paths into the website's own /public are also left alone.
+ */
+export function resolveAssetUrl(url: string | null): string | null {
+  if (!url) return null;
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith("/uploads/")) return `${API_URL}${url}`;
+  return url;
+}
+
 export async function fetchCertifications(): Promise<Certification[]> {
   try {
     const res = await fetch(`${API_URL}/api/website/certifications/`, {
       next: { revalidate: REVALIDATE_SECONDS },
     });
     if (!res.ok) return [];
-    return res.json();
+    const certs: Certification[] = await res.json();
+    return certs.map((c) => ({ ...c, badge_url: resolveAssetUrl(c.badge_url) }));
   } catch {
     return []; // certifications section simply hides itself
   }

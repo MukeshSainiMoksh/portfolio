@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-/** Thin cyan progress line fixed at the very top — fills as you scroll. */
+/** Thin accent progress line fixed at the very top — fills as you scroll. */
 export default function ScrollProgress() {
   const barRef = useRef<HTMLDivElement>(null);
 
@@ -46,8 +46,8 @@ export default function ScrollProgress() {
         style={{
           height: "100%",
           width: "0%",
-          background: "linear-gradient(90deg, #00f5ff, #a855f7)",
-          boxShadow: "0 0 8px rgba(0,245,255,0.6)",
+          background: "linear-gradient(90deg, var(--accent), var(--ember))",
+          boxShadow: "0 0 8px rgb(var(--accent-rgb) / 0.6)",
         }}
       />
     </div>

@@ -1,243 +1,247 @@
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
+import Section from "@/components/ui/Section";
+import Reveal from "@/components/ui/Reveal";
 import api from "@/services/api";
 import { sfx } from "@/services/sounds";
 
-export default function Contact() {
-  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+type Status = "idle" | "sending" | "success" | "error";
+
+const EMPTY = { name: "", email: "", subject: "", message: "" };
+
+export default function Contact({ about = {} }: { about?: Record<string, string> }) {
+  const [form, setForm] = useState(EMPTY);
+  const [status, setStatus] = useState<Status>("idle");
+  const [errorMsg, setErrorMsg] = useState("");
   const lastKeyTime = useRef(0);
+  /* Bots fill every field they find. Humans never see this one. */
+  const honeypot = useRef("");
 
   function handleKeySound() {
     const now = Date.now();
-    if (now - lastKeyTime.current > 38) { // throttle — max ~26 sounds/sec
+    if (now - lastKeyTime.current > 38) {
       lastKeyTime.current = now;
       sfx.typeKey();
     }
   }
 
+  function set<K extends keyof typeof EMPTY>(key: K, value: string) {
+    setForm((f) => ({ ...f, [key]: value }));
+    if (status === "error") setStatus("idle");
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (status === "sending") return;
+    if (honeypot.current) return; // silently drop
+
     setStatus("sending");
+    setErrorMsg("");
     sfx.scan();
+
     try {
       await api.post("/api/website/contact/submit", form);
       setStatus("success");
-      setForm({ name: "", email: "", subject: "", message: "" });
+      setForm(EMPTY);
       sfx.success();
-    } catch {
+    } catch (err: unknown) {
+      const code = (err as { response?: { status?: number } })?.response?.status;
+      setErrorMsg(
+        code === 429
+          ? "Too many messages from this address. Please try again a bit later."
+          : "That didn't go through. Please try again, or email me directly."
+      );
       setStatus("error");
       sfx.error();
     }
   }
 
-  const inputStyle = {
-    width: "100%",
-    background: "rgba(0,245,255,0.02)",
-    border: "1px solid rgba(0,245,255,0.12)",
-    padding: "12px 16px",
-    color: "rgba(255,255,255,0.85)",
-    fontSize: "14px",
-    fontFamily: "'Syne', sans-serif",
-    outline: "none",
-    transition: "border-color 0.2s, box-shadow 0.2s",
-  };
+  const email = about.email ?? "codermsaini@gmail.com";
+  const location = about.location ?? "Mohali, Punjab, India";
+  const availability = about.availability ?? "Open to new opportunities";
 
-  const labelStyle = {
-    display: "block",
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: "9px",
-    color: "rgba(255,255,255,0.3)",
-    letterSpacing: "2px",
-    textTransform: "uppercase" as const,
-    marginBottom: "8px",
-  };
+  const details = [
+    { label: "Email", value: email, href: `mailto:${email}` },
+    { label: "Location", value: location },
+    { label: "Response time", value: "Usually within 24 hours" },
+  ];
+
+  const busy = status === "sending";
 
   return (
-    <section id="contact" className="py-24" style={{ background: "#000510" }}>
-      <div className="max-w-5xl mx-auto px-6">
-        <div className="text-center mb-14">
-          <p className="section-label justify-center">Let&apos;s Talk</p>
-          <h2 className="section-title">Get In Touch</h2>
-          <div className="section-divider mx-auto" />
-          <p
-            className="max-w-md mx-auto"
-            style={{ color: "rgba(255,255,255,0.35)", fontSize: "15px", fontFamily: "'Syne', sans-serif", lineHeight: "1.7" }}
-          >
-            Have a project in mind or want to collaborate? I&apos;d love to hear from you.
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-5 gap-10">
-          {/* Info cards */}
-          <div className="lg:col-span-2 space-y-4">
-            {[
-              { label: "Email",    value: "codermsaini@gmail.com",  accent: "#00f5ff", rgb: "0,245,255",
-                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
-              { label: "Location", value: "Mohali, Punjab, India",  accent: "#a855f7", rgb: "168,85,247",
-                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /> },
-              { label: "Response", value: "Within 24 hours",        accent: "#00ff88", rgb: "0,255,136",
-                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /> },
-            ].map(({ label, value, accent, rgb, icon }) => (
-              <div
-                key={label}
-                className="flex items-center gap-4 transition-all duration-300 hover:-translate-y-0.5 p-4"
-                style={{ background: `rgba(${rgb}, 0.02)`, border: `1px solid rgba(${rgb}, 0.1)`, borderLeft: `2px solid ${accent}50` }}
-              >
-                <div
-                  className="w-10 h-10 flex items-center justify-center shrink-0"
-                  style={{ background: `rgba(${rgb}, 0.06)`, border: `1px solid rgba(${rgb}, 0.2)` }}
-                >
-                  <svg className="w-4 h-4" style={{ color: accent }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    {icon}
-                  </svg>
+    <Section
+      id="contact"
+      eyebrow="Contact"
+      title="Let's talk"
+      lede="Working on something interesting, or hiring? Tell me what you're building and I'll get back to you."
+      align="center"
+      width="text"
+    >
+      <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+        {/* ── Details ── */}
+        <Reveal>
+          <div className="card h-full">
+            <dl className="space-y-5">
+              {details.map(({ label, value, href }) => (
+                <div key={label}>
+                  <dt className="meta mb-1.5">{label}</dt>
+                  <dd style={{ color: "var(--text-1)", fontSize: "0.9375rem", overflowWrap: "anywhere" }}>
+                    {href ? (
+                      <a
+                        href={href}
+                        style={{ color: "var(--accent-soft)", textDecoration: "underline", textUnderlineOffset: "3px" }}
+                      >
+                        {value}
+                      </a>
+                    ) : (
+                      value
+                    )}
+                  </dd>
                 </div>
-                <div>
-                  <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "9px", color: `${accent}80`, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>
-                    {label}
-                  </p>
-                  <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "13px", fontFamily: "'Syne', sans-serif" }}>{value}</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </dl>
 
-            {/* Availability badge */}
-            <div
-              className="p-4 flex items-center gap-3"
-              style={{ background: "rgba(0,255,136,0.03)", border: "1px solid rgba(0,255,136,0.1)", borderLeft: "2px solid rgba(0,255,136,0.4)" }}
+            <p
+              className="mt-6 flex items-center gap-2.5 pt-5"
+              style={{ borderTop: "1px solid var(--hairline)", color: "var(--text-2)", fontSize: "0.875rem" }}
             >
-              <span className="w-2 h-2 rounded-full bg-[#00ff88] shadow-[0_0_8px_#00ff88] animate-pulse shrink-0" />
-              <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "rgba(0,255,136,0.7)", letterSpacing: "1px", textTransform: "uppercase" }}>
-                Open to new opportunities
+              <span className="glow-dot" aria-hidden="true" />
+              {availability}
+            </p>
+          </div>
+        </Reveal>
+
+        {/* ── Form ── */}
+        <Reveal delay={0.08}>
+          {status === "success" ? (
+            <div className="card flex h-full flex-col items-center justify-center py-14 text-center" role="status">
+              <span
+                aria-hidden="true"
+                className="mb-5 flex items-center justify-center"
+                style={{
+                  width: "52px",
+                  height: "52px",
+                  borderRadius: "50%",
+                  background: "rgb(var(--success-rgb) / 0.12)",
+                  border: "1px solid rgb(var(--success-rgb) / 0.3)",
+                }}
+              >
+                <svg className="h-6 w-6" style={{ color: "var(--success)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </span>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--text-1)" }}>Message sent</h3>
+              <p className="mt-2 mb-7" style={{ color: "var(--text-3)", fontSize: "0.9375rem" }}>
+                Thanks for reaching out — I&apos;ll reply soon.
               </p>
+              <button type="button" className="btn-neural" onClick={() => { setStatus("idle"); sfx.click(); }}>
+                Send another
+              </button>
             </div>
-          </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="card" noValidate={false}>
+              {/* honeypot — hidden from people, not from bots */}
+              <input
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                onChange={(e) => { honeypot.current = e.target.value; }}
+                style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+              />
 
-          {/* Form */}
-          <div className="lg:col-span-3">
-            {status === "success" ? (
-              <div
-                className="text-center py-16 p-6"
-                style={{ background: "rgba(0,255,136,0.02)", border: "1px solid rgba(0,255,136,0.15)", borderTop: "2px solid #00ff88" }}
-              >
-                <div
-                  className="w-16 h-16 mx-auto mb-5 flex items-center justify-center"
-                  style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.3)" }}
-                >
-                  <svg className="w-7 h-7" style={{ color: "#00ff88" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h3 className="text-white font-bold text-xl mb-2" style={{ fontFamily: "'Orbitron', monospace" }}>
-                  Message Sent
-                </h3>
-                <p style={{ color: "rgba(255,255,255,0.4)", fontFamily: "'Syne', sans-serif", fontSize: "14px", marginBottom: "24px" }}>
-                  Thanks for reaching out. I&apos;ll get back to you soon.
-                </p>
-                <button
-                  onClick={() => { setStatus("idle"); sfx.click(); }}
-                  className="btn-neural"
-                  style={{ color: "#00ff88", borderColor: "rgba(0,255,136,0.35)", background: "rgba(0,255,136,0.05)" }}
-                >
-                  Send Another
-                </button>
-              </div>
-            ) : (
-              <form
-                onSubmit={handleSubmit}
-                className="space-y-5 p-6"
-                style={{ background: "rgba(0,245,255,0.01)", border: "1px solid rgba(0,245,255,0.08)", borderTop: "2px solid rgba(0,245,255,0.3)" }}
-              >
-                <div className="grid sm:grid-cols-2 gap-5">
-                  <div>
-                    <label style={labelStyle}>Name *</label>
-                    <input
-                      style={inputStyle}
-                      placeholder="Your name"
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      required
-                      onKeyDown={handleKeySound}
-                      onFocus={(e) => { sfx.scan(0.3); e.target.style.borderColor = "rgba(0,245,255,0.4)"; e.target.style.boxShadow = "0 0 0 1px rgba(0,245,255,0.1)"; }}
-                      onBlur={(e)  => { e.target.style.borderColor = "rgba(0,245,255,0.12)"; e.target.style.boxShadow = "none"; }}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Email *</label>
-                    <input
-                      type="email"
-                      style={inputStyle}
-                      placeholder="your@email.com"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      required
-                      onKeyDown={handleKeySound}
-                      onFocus={(e) => { sfx.scan(0.3); e.target.style.borderColor = "rgba(0,245,255,0.4)"; e.target.style.boxShadow = "0 0 0 1px rgba(0,245,255,0.1)"; }}
-                      onBlur={(e)  => { e.target.style.borderColor = "rgba(0,245,255,0.12)"; e.target.style.boxShadow = "none"; }}
-                    />
-                  </div>
-                </div>
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label style={labelStyle}>Subject</label>
+                  <label className="field-label" htmlFor="contact-name">Name</label>
                   <input
-                    style={inputStyle}
-                    placeholder="What's this about?"
-                    value={form.subject}
-                    onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                    id="contact-name"
+                    name="name"
+                    className="field"
+                    autoComplete="name"
+                    placeholder="Your name"
+                    required
+                    value={form.name}
+                    onChange={(e) => set("name", e.target.value)}
                     onKeyDown={handleKeySound}
-                    onFocus={(e) => { sfx.scan(0.3); e.target.style.borderColor = "rgba(0,245,255,0.4)"; e.target.style.boxShadow = "0 0 0 1px rgba(0,245,255,0.1)"; }}
-                    onBlur={(e)  => { e.target.style.borderColor = "rgba(0,245,255,0.12)"; e.target.style.boxShadow = "none"; }}
                   />
                 </div>
                 <div>
-                  <label style={labelStyle}>Message *</label>
-                  <textarea
-                    rows={5}
-                    style={{ ...inputStyle, resize: "none" }}
-                    placeholder="Tell me about your project or opportunity..."
-                    value={form.message}
-                    onChange={(e) => setForm({ ...form, message: e.target.value })}
+                  <label className="field-label" htmlFor="contact-email">Email</label>
+                  <input
+                    id="contact-email"
+                    name="email"
+                    type="email"
+                    className="field"
+                    autoComplete="email"
+                    placeholder="you@company.com"
                     required
+                    value={form.email}
+                    onChange={(e) => set("email", e.target.value)}
                     onKeyDown={handleKeySound}
-                    onFocus={(e) => { sfx.scan(0.3); e.target.style.borderColor = "rgba(0,245,255,0.4)"; e.target.style.boxShadow = "0 0 0 1px rgba(0,245,255,0.1)"; }}
-                    onBlur={(e)  => { e.target.style.borderColor = "rgba(0,245,255,0.12)"; e.target.style.boxShadow = "none"; }}
                   />
                 </div>
+              </div>
 
-                {status === "error" && (
-                  <p
-                    style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", color: "#ff2d78", letterSpacing: "1px" }}
-                  >
-                    ⚠ Failed to send. Please try again.
-                  </p>
+              <div className="mt-4">
+                <label className="field-label" htmlFor="contact-subject">
+                  Subject <span className="meta">optional</span>
+                </label>
+                <input
+                  id="contact-subject"
+                  name="subject"
+                  className="field"
+                  placeholder="What's this about?"
+                  value={form.subject}
+                  onChange={(e) => set("subject", e.target.value)}
+                  onKeyDown={handleKeySound}
+                />
+              </div>
+
+              <div className="mt-4">
+                <label className="field-label" htmlFor="contact-message">Message</label>
+                <textarea
+                  id="contact-message"
+                  name="message"
+                  rows={6}
+                  className="field"
+                  style={{ resize: "vertical", minHeight: "132px" }}
+                  placeholder="A few lines about the project or role…"
+                  required
+                  value={form.message}
+                  onChange={(e) => set("message", e.target.value)}
+                  onKeyDown={handleKeySound}
+                />
+              </div>
+
+              {/* Announced to screen readers the moment it appears */}
+              <p
+                role="alert"
+                aria-live="assertive"
+                className="mt-4 min-h-[1.25rem]"
+                style={{ color: "var(--danger)", fontSize: "0.875rem" }}
+              >
+                {status === "error" ? errorMsg : ""}
+              </p>
+
+              <button type="submit" className="btn-cosmic mt-2 w-full" disabled={busy}>
+                {busy ? (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="h-4 w-4 animate-spin rounded-full"
+                      style={{ border: "2px solid rgb(0 0 0 / 0.25)", borderTopColor: "#0a0a12" }}
+                    />
+                    Sending…
+                  </>
+                ) : (
+                  "Send message"
                 )}
-
-                <button
-                  type="submit"
-                  disabled={status === "sending"}
-                  className="btn-neural w-full justify-center"
-                  style={{ padding: "14px", fontSize: "11px" }}
-                >
-                  {status === "sending" ? (
-                    <>
-                      <span className="w-4 h-4 border border-[rgba(0,245,255,0.3)] border-t-[#00f5ff] rounded-full animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      Send Message
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
+              </button>
+            </form>
+          )}
+        </Reveal>
       </div>
-    </section>
+    </Section>
   );
 }

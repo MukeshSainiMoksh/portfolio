@@ -1,441 +1,675 @@
-/* @import must precede all other rules or browsers are allowed to ignore it */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Syne:wght@300;400;700;800&family=JetBrains+Mono:wght@300;400;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   Every colour, font and radius in the site resolves through this block.
+   Nothing below (or in any component) may hard-code a colour literal.
+   ════════════════════════════════════════════════════════════════════════ */
 @layer base {
+  :root {
+    /* ── Surfaces ──────────────────────────────────────────────────────
+       Near-black with a cool temperature, not pure black. Depth comes
+       from the ladder + hairlines, never from drop shadows alone.       */
+    --surface-0: #08080c;   /* page          */
+    --surface-1: #0d0d13;   /* raised band   */
+    --surface-2: #131320;   /* card          */
+    --surface-3: #1b1b2b;   /* hover / input */
+    --surface-0-rgb: 8 8 12;
+    --surface-2-rgb: 19 19 32;
+    --surface-3-rgb: 27 27 43;
+
+    --hairline:        rgb(255 255 255 / 0.07);
+    --hairline-strong: rgb(255 255 255 / 0.13);
+
+    /* ── Accent — electric iris ────────────────────────────────────────
+       One signature hue. Alpha variants are composed via --accent-rgb.  */
+    --accent:      #6e7bff;
+    --accent-soft: #a5aeff;
+    --accent-deep: #3a44c9;
+    --accent-rgb:      110 123 255;
+    --accent-soft-rgb: 165 174 255;
+
+    /* Warm counterpoint. Emphasis moments only — never a second theme. */
+    --ember:     #ff8a4c;
+    --ember-rgb: 255 138 76;
+
+    /* ── Semantic — state only, never decoration ───────────────────── */
+    --success:     #3dd68c;
+    --success-rgb: 61 214 140;
+    --warning:     #f5c451;
+    --warning-rgb: 245 196 81;
+    --danger:      #ff6b6b;
+    --danger-rgb:  255 107 107;
+
+    /* ── Text — every value below passes WCAG AA on --surface-0 ──────
+       text-1 17.6:1 · text-2 10.3:1 · text-3 6.5:1                     */
+    --text-1: rgb(255 255 255 / 0.94);
+    --text-2: rgb(255 255 255 / 0.72);
+    --text-3: rgb(255 255 255 / 0.56);
+
+    /* ── Typography ───────────────────────────────────────────────────
+       Font family vars are injected by next/font in app/layout.tsx.    */
+    --font-sans:  var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+    --font-mono:  var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+    --font-serif: var(--font-instrument), Georgia, "Times New Roman", serif;
+
+    /* Fluid type scale. The display lower bound has to clear a 390px
+       viewport — "Mukesh Kumar" must fit on one line in 342px. */
+    --step-display: clamp(2.15rem, 8.2vw, 8rem);
+    --step-h2:      clamp(1.75rem, 3.4vw, 2.75rem);
+    --step-h3:      clamp(1.05rem, 1.5vw, 1.25rem);
+    --step-body:    1rem;
+    --step-meta:    0.75rem;   /* 12px floor — no 9px text anywhere */
+
+    /* ── Layout ────────────────────────────────────────────────────── */
+    --container:      1140px;
+    --container-text: 900px;   /* reading-width sections */
+    --gutter:         clamp(1.25rem, 4vw, 2rem);
+    --section-pad:    clamp(4.5rem, 10vw, 8rem);
+
+    /* ── Radius ────────────────────────────────────────────────────── */
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 16px;
+    --r-xl: 24px;
+
+    /* ── Elevation ────────────────────────────────────────────────── */
+    --shadow-md:     0 8px 24px -8px rgb(0 0 0 / 0.6);
+    --shadow-lg:     0 24px 64px -16px rgb(0 0 0 / 0.7);
+    --shadow-accent: 0 8px 40px -12px rgb(var(--accent-rgb) / 0.35);
+
+    /* ── Motion ───────────────────────────────────────────────────── */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --dur-fast: 0.2s;
+    --dur-base: 0.32s;
+  }
+
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    /* Base colour lives here so <body> can stay transparent and let the
+       fixed .site-bg layer (z-index -1) show through under every section. */
+    background: var(--surface-0);
+    /* Sticky nav must not cover the target of an in-page anchor. */
+    scroll-padding-top: 92px;
+  }
+
   body {
-    background: #000308;
-    color: rgba(255, 255, 255, 0.85);
-    font-family: 'Syne', sans-serif;
+    background: transparent;
+    color: var(--text-2);
+    font-family: var(--font-sans);
+    font-size: var(--step-body);
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
   }
-  ::selection { background: rgba(0, 245, 255, 0.15); color: #fff; }
-  ::-webkit-scrollbar { width: 3px; }
-  ::-webkit-scrollbar-track { background: #000308; }
-  ::-webkit-scrollbar-thumb { background: rgba(0, 245, 255, 0.25); }
+
+  h1, h2, h3, h4 {
+    color: var(--text-1);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+  }
+
+  ::selection { background: rgb(var(--accent-rgb) / 0.28); color: #fff; }
+
+  ::-webkit-scrollbar       { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--surface-0); }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--accent-rgb) / 0.28);
+    border-radius: 99px;
+    border: 2px solid var(--surface-0);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: rgb(var(--accent-rgb) / 0.5); }
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   COMPONENT CLASSES
+   ════════════════════════════════════════════════════════════════════════ */
 @layer components {
-  /* Layout */
-  .section { @apply py-24 px-4 max-w-6xl mx-auto; }
 
-  /* Section labels — // STYLE */
-  .section-label {
+  /* ── Section shell ────────────────────────────────────────────────
+     Every section uses the same container, gutter and vertical rhythm.
+     Before this existed each one picked its own max-width, which is why
+     the page never lined up down the left edge.                       */
+  /* Horizontal rhythm only. Hero, navbar and footer use this so their
+     content lines up down the same left edge as every section. */
+  .container-shell {
+    width: 100%;
+    max-width: var(--container);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .section-shell {
+    width: 100%;
+    max-width: var(--container);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    padding-block: var(--section-pad);
+  }
+  /* Narrower reading measure, but the same left edge — the inner content
+     narrows, not the container, so the page keeps one vertical rule. */
+  .section-shell[data-width="text"] > * { max-width: var(--container-text); }
+  .section-shell[data-align="center"] > * { margin-inline: auto; }
+
+  .section-eyebrow {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: #00f5ff;
-    letter-spacing: 4px;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: var(--step-meta);
+    color: var(--accent-soft);
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     margin-bottom: 14px;
-    opacity: 0.8;
   }
-  .section-label::before { content: '//'; opacity: 0.4; font-size: 11px; }
-  .section-subtitle { @apply section-label; }
+  .section-eyebrow::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: rgb(var(--accent-rgb) / 0.6);
+    flex-shrink: 0;
+  }
+  .section-head[data-align="center"] .section-eyebrow { justify-content: center; }
 
-  /* Section headings */
   .section-title {
-    font-family: 'Orbitron', monospace;
-    font-weight: 800;
-    font-size: clamp(26px, 3.5vw, 44px);
-    color: #fff;
-    letter-spacing: -1px;
-    line-height: 1.1;
-    margin-bottom: 8px;
+    font-size: var(--step-h2);
+    color: var(--text-1);
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    text-wrap: balance;
   }
 
-  /* Section divider */
-  .section-divider {
-    width: 48px;
-    height: 2px;
-    background: linear-gradient(90deg, #00f5ff, transparent);
-    margin-bottom: 48px;
+  .section-lede {
+    margin-top: 14px;
+    max-width: 58ch;
+    color: var(--text-2);
+    font-size: 1rem;
+    line-height: 1.7;
+    text-wrap: pretty;
   }
+  .section-head[data-align="center"] .section-lede { margin-inline: auto; }
 
-  /* Cards */
-  .card-neural {
-    background: rgba(0, 245, 255, 0.02);
-    border: 1px solid rgba(0, 245, 255, 0.1);
-    border-left: 2px solid rgba(0, 245, 255, 0.35);
-    padding: 24px;
-    transition: all 0.3s ease;
+  .section-head { margin-bottom: clamp(2.5rem, 5vw, 3.5rem); }
+
+  /* ── Card ─────────────────────────────────────────────────────────
+     One card treatment for the whole site. It is slightly translucent
+     so the field behind the page shows through — that is what keeps a
+     card feeling like part of the surface rather than a sticker.      */
+  .card {
     position: relative;
-    overflow: hidden;
+    padding: 24px;
+    border-radius: var(--r-lg);
+    background: rgb(var(--surface-2-rgb) / 0.55);
+    border: 1px solid var(--hairline);
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
   }
-  .card-neural::before {
+
+  .card-interactive {
+    transition:
+      background   var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out),
+      transform    var(--dur-base) var(--ease-out),
+      box-shadow   var(--dur-base) var(--ease-out);
+  }
+  .card-interactive:hover {
+    background: rgb(var(--surface-3-rgb) / 0.62);
+    border-color: var(--hairline-strong);
+    transform: translateY(-3px);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07), var(--shadow-md);
+  }
+  /* A hairline that lights along the top edge on hover. */
+  .card-interactive::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
+    inset: 0 0 auto 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.3), transparent);
+    border-radius: inherit;
+    background: linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.65), transparent);
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity var(--dur-base) var(--ease-out);
   }
-  .card-neural:hover { transform: translateY(-2px); }
-  .card-neural:hover::before { opacity: 1; }
-  .card-neural:hover {
-    background: rgba(0, 245, 255, 0.04);
-    border-color: rgba(0, 245, 255, 0.2);
-    border-left-color: #00f5ff;
-    box-shadow: 0 8px 40px rgba(0, 245, 255, 0.06);
-  }
+  .card-interactive:hover::before { opacity: 1; }
 
-  .card-cosmic {
-    background: rgba(168, 85, 247, 0.02);
-    border: 1px solid rgba(168, 85, 247, 0.12);
-    border-left: 2px solid rgba(168, 85, 247, 0.4);
-    padding: 24px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-  }
-  .card-cosmic:hover {
-    background: rgba(168, 85, 247, 0.05);
-    border-left-color: #a855f7;
-    box-shadow: 0 8px 40px rgba(168, 85, 247, 0.08);
-    transform: translateY(-2px);
-  }
-
-  .card-holo {
-    background: rgba(0, 255, 136, 0.02);
-    border: 1px solid rgba(0, 255, 136, 0.1);
-    border-left: 2px solid rgba(0, 255, 136, 0.35);
-    padding: 24px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-  }
-  .card-holo:hover {
-    background: rgba(0, 255, 136, 0.04);
-    border-left-color: #00ff88;
-    box-shadow: 0 8px 40px rgba(0, 255, 136, 0.06);
-    transform: translateY(-2px);
-  }
-
-  /* Legacy compat */
-  .card-glass { @apply card-neural; }
-  .card-glow { @apply card-neural; }
-  .card-dark { @apply card-neural; }
-
-  /* Buttons */
-  .btn-neural {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 13px 26px;
-    background: rgba(0, 245, 255, 0.06);
-    border: 1px solid rgba(0, 245, 255, 0.35);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: #00f5ff;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    white-space: nowrap;
-  }
-  .btn-neural:hover {
-    background: rgba(0, 245, 255, 0.12);
-    border-color: #00f5ff;
-    box-shadow: 0 0 24px rgba(0, 245, 255, 0.18);
-    color: #fff;
-  }
-
+  /* ── Buttons ──────────────────────────────────────────────────────
+     Physical objects: a lit top edge, a body, and an extruded base
+     they press into on click.                                        */
+  .btn-neural,
   .btn-cosmic {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 13px 26px;
-    background: linear-gradient(135deg, #a855f7, #7c3aed);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: #fff;
-    letter-spacing: 2px;
-    text-transform: uppercase;
+    justify-content: center;
+    gap: 9px;
+    padding: 12px 20px;
+    border-radius: var(--r-md);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
     text-decoration: none;
-    cursor: pointer;
-    border: none;
-    transition: all 0.25s ease;
     white-space: nowrap;
+    cursor: pointer;
+    transition: all var(--dur-fast) var(--ease-out);
+  }
+
+  .btn-neural {
+    background: rgb(255 255 255 / 0.05);
+    border: 1px solid var(--hairline-strong);
+    color: var(--text-1);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.09),
+      0 2px 0 0 rgb(0 0 0 / 0.35),
+      0 6px 14px -8px rgb(0 0 0 / 0.7);
+  }
+  .btn-neural:hover {
+    background: rgb(255 255 255 / 0.09);
+    border-color: rgb(var(--accent-rgb) / 0.5);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 3px 0 0 rgb(0 0 0 / 0.4),
+      0 10px 20px -10px rgb(0 0 0 / 0.8);
+  }
+  .btn-neural:active {
+    transform: translateY(1px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      0 0 0 0 rgb(0 0 0 / 0.35),
+      0 2px 6px -4px rgb(0 0 0 / 0.6);
+  }
+
+  .btn-cosmic {
+    background: linear-gradient(180deg, var(--accent-soft), var(--accent));
+    border: 1px solid var(--accent);
+    color: #0a0a12;
+    font-weight: 600;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.4),
+      0 2px 0 0 var(--accent-deep),
+      0 8px 18px -8px rgb(var(--accent-rgb) / 0.6);
   }
   .btn-cosmic:hover {
-    box-shadow: 0 0 32px rgba(168, 85, 247, 0.4);
     transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.5),
+      0 3px 0 0 var(--accent-deep),
+      0 12px 24px -8px rgb(var(--accent-rgb) / 0.7);
+  }
+  .btn-cosmic:active {
+    transform: translateY(2px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.25),
+      0 0 0 0 var(--accent-deep),
+      0 3px 8px -5px rgb(var(--accent-rgb) / 0.5);
   }
 
-  /* Legacy compat */
-  .btn-primary { @apply btn-neural; }
-  .btn-secondary { @apply btn-neural; }
-  .btn-solid { @apply btn-cosmic; }
-  .btn-outline { @apply btn-neural; }
+  .btn-neural[disabled],
+  .btn-cosmic[disabled] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
 
-  /* Badges */
+  /* Quiet inline link/button used inside cards. */
+  .btn-quiet {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 12px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--hairline);
+    background: transparent;
+    color: var(--text-2);
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--dur-fast) var(--ease-out);
+  }
+  .btn-quiet:hover {
+    border-color: rgb(var(--accent-rgb) / 0.5);
+    color: var(--text-1);
+    background: rgb(var(--accent-rgb) / 0.07);
+  }
+
+  /* ── Chips & badges ──────────────────────────────────────────────
+     Mono, because these carry literal data (tech names, states).     */
+  .chip,
+  .badge-tech,
+  .badge-featured,
+  .badge-current {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: var(--r-sm);
+    font-family: var(--font-mono);
+    font-size: var(--step-meta);
+    line-height: 1.5;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    transition: all var(--dur-fast) var(--ease-out);
+  }
+  .chip,
   .badge-tech {
-    display: inline-block;
-    background: rgba(0, 245, 255, 0.05);
-    color: rgba(0, 245, 255, 0.65);
-    border: 1px solid rgba(0, 245, 255, 0.15);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    padding: 3px 10px;
-    letter-spacing: 0.5px;
-    transition: all 0.2s;
+    background: rgb(255 255 255 / 0.05);
+    border-color: var(--hairline);
+    color: var(--text-2);
+  }
+  .chip:hover,
+  .badge-tech:hover {
+    border-color: rgb(var(--accent-rgb) / 0.4);
+    color: var(--accent-soft);
   }
   .badge-featured {
-    display: inline-block;
-    background: rgba(251, 191, 36, 0.06);
-    color: rgba(251, 191, 36, 0.8);
-    border: 1px solid rgba(251, 191, 36, 0.2);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    padding: 3px 10px;
-    letter-spacing: 0.5px;
+    background: rgb(var(--ember-rgb) / 0.1);
+    border-color: rgb(var(--ember-rgb) / 0.28);
+    color: var(--ember);
   }
   .badge-current {
-    display: inline-block;
-    background: rgba(0, 255, 136, 0.06);
-    color: rgba(0, 255, 136, 0.8);
-    border: 1px solid rgba(0, 255, 136, 0.2);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    padding: 3px 10px;
-    letter-spacing: 0.5px;
-  }
-  .badge {
-    display: inline-block;
-    background: rgba(168, 85, 247, 0.05);
-    color: rgba(168, 85, 247, 0.7);
-    border: 1px solid rgba(168, 85, 247, 0.15);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    padding: 3px 10px;
-    letter-spacing: 0.5px;
+    background: rgb(var(--success-rgb) / 0.1);
+    border-color: rgb(var(--success-rgb) / 0.28);
+    color: var(--success);
   }
 
-  /* Gradient text */
+  /* ── Form fields ─────────────────────────────────────────────────
+     Focus styling lives here, not in JS event handlers, so it plays
+     nicely with :focus-visible and keyboard navigation.              */
+  .field-label {
+    display: block;
+    margin-bottom: 7px;
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-2);
+  }
+  .field {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: var(--r-md);
+    background: rgb(0 0 0 / 0.28);
+    border: 1px solid var(--hairline);
+    color: var(--text-1);
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color var(--dur-fast) var(--ease-out),
+                box-shadow   var(--dur-fast) var(--ease-out);
+  }
+  .field::placeholder { color: var(--text-3); }
+  .field:hover  { border-color: var(--hairline-strong); }
+  .field:focus  {
+    border-color: rgb(var(--accent-rgb) / 0.65);
+    box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.14);
+  }
+  .field[aria-invalid="true"] {
+    border-color: rgb(var(--danger-rgb) / 0.6);
+  }
+
+  /* ── Meta text ───────────────────────────────────────────────────
+     One class for every date / id / location line on the site.       */
+  .meta {
+    font-family: var(--font-mono);
+    font-size: var(--step-meta);
+    color: var(--text-3);
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Empty state ─────────────────────────────────────────────────── */
+  .empty-state {
+    padding: 4rem 1.5rem;
+    text-align: center;
+    border-radius: var(--r-lg);
+    border: 1px dashed var(--hairline-strong);
+    color: var(--text-3);
+    font-size: 0.9375rem;
+  }
+
+  /* ── Text treatments ─────────────────────────────────────────────
+     The serif-italic accent word. Used sparingly — hero only.        */
+  .display-serif {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+
   .gradient-text {
-    background: linear-gradient(90deg, #00f5ff, #a855f7);
+    background: linear-gradient(100deg, var(--accent-soft), var(--ember));
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     background-clip: text;
-  }
-  .gradient-text-cyan {
-    background: linear-gradient(90deg, #00f5ff, #0088ff);
-    -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-clip: text;
   }
 
-  /* Glow dot */
   .glow-dot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
+    flex-shrink: 0;
     border-radius: 50%;
-    background: #00f5ff;
-    box-shadow: 0 0 8px #00f5ff, 0 0 16px rgba(0, 245, 255, 0.5);
-    animation: blink-dot 1.5s ease-in-out infinite;
+    background: var(--success);
+    box-shadow: 0 0 0 3px rgb(var(--success-rgb) / 0.16);
+    animation: blink-dot 2.4s ease-in-out infinite;
   }
 
-  /* Glass */
-  .glass {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(12px);
+  /* ── Global field ─────────────────────────────────────────────────
+     One fixed layer under the whole document. Sections are transparent
+     so this reads as a single continuous surface rather than a stack
+     of separately-coloured bands.                                     */
+  .site-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+    contain: layout paint;
+  }
+  .site-bg > * {
+    position: absolute;
+    inset: 0;
   }
 
-  /* Neural grid bg */
-  .hero-grid {
+  .site-bg-wash {
+    background:
+      radial-gradient(60% 48% at 18% 12%,  rgb(var(--accent-rgb) / 0.16), transparent 68%),
+      radial-gradient(52% 44% at 86% 32%,  rgb(var(--accent-soft-rgb) / 0.10), transparent 70%),
+      radial-gradient(64% 50% at 50% 104%, rgb(var(--ember-rgb) / 0.09), transparent 68%);
+    filter: blur(16px);
+    animation: bgDrift 26s ease-in-out infinite alternate;
+  }
+
+  .site-bg-grid {
     background-image:
-      linear-gradient(rgba(0, 245, 255, 0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 245, 255, 0.025) 1px, transparent 1px);
-    background-size: 60px 60px;
+      linear-gradient(rgb(255 255 255 / 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(255 255 255 / 0.02) 1px, transparent 1px);
+    background-size: 76px 76px;
+    mask-image: radial-gradient(ellipse 76% 68% at 50% 42%, #000 22%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 76% 68% at 50% 42%, #000 22%, transparent 100%);
   }
 
-  /* Neon text glow */
-  .text-glow-cyan {
-    text-shadow: 0 0 12px rgba(0, 245, 255, 0.7), 0 0 32px rgba(0, 245, 255, 0.3);
-  }
-  .text-glow-purple {
-    text-shadow: 0 0 12px rgba(168, 85, 247, 0.7), 0 0 32px rgba(168, 85, 247, 0.3);
-  }
-  .text-glow-green {
-    text-shadow: 0 0 12px rgba(0, 255, 136, 0.7), 0 0 32px rgba(0, 255, 136, 0.3);
+  .site-bg-canvas {
+    width: 100%;
+    height: 100%;
+    opacity: 0.85;
   }
 
-  /* Glitch text — hover effect */
-  .glitch-text {
-    position: relative;
-  }
-  .glitch-text:hover {
-    animation: glitch 0.4s steps(1) forwards;
-  }
-
-  /* Terminal block */
-  .terminal-block {
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(0, 245, 255, 0.1);
-    border-left: 2px solid rgba(0, 245, 255, 0.4);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: rgba(0, 245, 255, 0.7);
-    padding: 14px 18px;
-    position: relative;
-    overflow: hidden;
-  }
-  .terminal-block::before {
-    content: '> ';
-    color: rgba(0, 245, 255, 0.35);
-  }
-
-  /* Card hover scan effect */
-  .card-scan {
-    position: relative;
-    overflow: hidden;
-  }
-  .card-scan::after {
-    content: '';
-    position: absolute;
-    top: -100%;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.5), transparent);
-    transition: top 0s;
-    opacity: 0;
-  }
-  .card-scan:hover::after {
-    animation: scanReveal 0.6s ease forwards;
-    opacity: 1;
-  }
-
-  /* Shimmer loading skeleton */
-  .shimmer {
-    background: linear-gradient(90deg,
-      rgba(0, 245, 255, 0.03) 0%,
-      rgba(0, 245, 255, 0.08) 50%,
-      rgba(0, 245, 255, 0.03) 100%
+  .site-bg-vignette {
+    background: radial-gradient(
+      ellipse 90% 80% at 50% 45%,
+      transparent 42%,
+      rgb(var(--surface-0-rgb) / 0.72) 100%
     );
-    background-size: 200% 100%;
-    animation: shimmer 1.8s infinite;
   }
 
-  /* HUD corner brackets */
-  .hud-corner {
+  /* Film grain — ties every surface together, kills gradient banding */
+  .grain {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ── Navbar ───────────────────────────────────────────────────────
+     The bar stays flush to the top edge — it is part of the page, not
+     an island hovering over it. Depth comes from lighting: a highlight
+     where the top edge catches light, and a shadow it casts downward. */
+  .nav-bar {
     position: relative;
+    border-bottom: 1px solid transparent;
+    transition:
+      background   var(--dur-base) var(--ease-out),
+      box-shadow   var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out),
+      padding      var(--dur-base) var(--ease-out);
   }
-  .hud-corner::before,
-  .hud-corner::after {
-    content: '';
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    border-color: rgba(0, 245, 255, 0.4);
-    border-style: solid;
+  .nav-bar[data-scrolled="true"] {
+    background: rgb(var(--surface-0-rgb) / 0.74);
+    backdrop-filter: blur(20px) saturate(1.7);
+    -webkit-backdrop-filter: blur(20px) saturate(1.7);
+    border-bottom-color: var(--hairline);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.07),
+      0 12px 32px -20px rgb(0 0 0 / 0.95);
   }
-  .hud-corner::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
-  .hud-corner::after  { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+
+  /* Extruded mark. Tilts on hover — the depth is real, but it stays
+     anchored to the bar. */
+  .nav-mark {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: linear-gradient(145deg, var(--accent-soft), var(--accent-deep));
+    box-shadow:
+      inset 0 1.5px 0 rgb(255 255 255 / 0.45),
+      inset 0 -2px 3px rgb(0 0 0 / 0.35),
+      0 3px 8px -2px rgb(var(--accent-rgb) / 0.5);
+    transform: perspective(320px) rotateX(0deg) rotateY(0deg);
+    transition: transform 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+  }
+  .nav-logo:hover .nav-mark {
+    transform: perspective(320px) rotateX(16deg) rotateY(-18deg) translateZ(3px);
+    box-shadow:
+      inset 0 1.5px 0 rgb(255 255 255 / 0.55),
+      inset 0 -3px 5px rgb(0 0 0 / 0.4),
+      0 7px 16px -4px rgb(var(--accent-rgb) / 0.65);
+  }
+
+  .nav-link {
+    padding: 7px 12px;
+    border-radius: var(--r-md);
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--text-3);
+    transition: color      var(--dur-fast) var(--ease-out),
+                background var(--dur-fast) var(--ease-out);
+  }
+  .nav-link:hover { color: var(--text-1); }
+  /* Active reads as pressed *into* the bar, not floating on top of it. */
+  .nav-link[data-active="true"] {
+    color: var(--text-1);
+    background: rgb(255 255 255 / 0.05);
+    box-shadow:
+      inset 0 1px 2px rgb(0 0 0 / 0.45),
+      inset 0 -1px 0 rgb(255 255 255 / 0.06);
+  }
 }
 
-/* ── Keyframes ───────────────────────────────── */
-@keyframes glitch {
-  0%   { text-shadow: 2px 0 #00f5ff, -2px 0 #a855f7; }
-  25%  { text-shadow: -2px 0 #00f5ff, 2px 0 #a855f7; clip-path: inset(10% 0 80% 0); }
-  50%  { text-shadow: 2px 0 #a855f7, -2px 0 #00f5ff; clip-path: inset(50% 0 30% 0); }
-  75%  { text-shadow: -2px 0 #00f5ff, 2px 0 #a855f7; clip-path: inset(80% 0 5% 0); }
-  100% { text-shadow: none; clip-path: none; }
+/* ════════════════════════════════════════════════════════════════════════
+   SCROLL REVEAL
+   Content enters as it comes into view, not on page load. The old
+   load-time animation meant everything below the fold had already
+   finished animating before it was ever seen.
+   ════════════════════════════════════════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity   0.62s var(--ease-out),
+    transform 0.62s var(--ease-out);
 }
-@keyframes scanReveal {
-  from { top: -1px; }
-  to   { top: 101%; }
-}
-@keyframes countUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+.reveal[data-shown="true"] {
+  opacity: 1;
+  transform: none;
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   KEYFRAMES
+   ════════════════════════════════════════════════════════════════════════ */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(24px); }
+  from { opacity: 0; transform: translateY(18px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-30px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(30px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-14px); }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-14px); }
 }
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 6px rgba(0, 245, 255, 0.4); }
-  50%       { box-shadow: 0 0 20px rgba(0, 245, 255, 0.9), 0 0 40px rgba(0, 245, 255, 0.3); }
+@keyframes bgDrift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(-2.5%, 1.5%, 0) scale(1.06); }
 }
 @keyframes blink-cursor {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
+  50%      { opacity: 0; }
 }
 @keyframes blink-dot {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px #00f5ff; }
-  50%       { opacity: 0.4; box-shadow: 0 0 3px #00f5ff; }
-}
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%      { opacity: 0.6; transform: scale(0.85); }
 }
 
-/* ── Animation classes ───────────────────────── */
-.animate-fade-in-up  { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-fade-in     { animation: fadeIn 0.8s ease forwards; }
-.animate-slide-left  { animation: slideInLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-slide-right { animation: slideInRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-float       { animation: float 5s ease-in-out infinite; }
-.animate-pulse-glow  { animation: pulse-glow 2s ease-in-out infinite; }
-.animate-blink       { animation: blink-cursor 1s step-end infinite; }
-
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
-.delay-400 { animation-delay: 0.4s; }
-.delay-500 { animation-delay: 0.5s; }
-.delay-600 { animation-delay: 0.6s; }
-.delay-700 { animation-delay: 0.7s; }
-.delay-800 { animation-delay: 0.8s; }
-
-/* ── Skill bar ───────────────────────────────── */
-.skill-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #00f5ff, #a855f7);
-  transition: width 1.4s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
+/* ── Chat ──────────────────────────────────────────────────────────── */
+@keyframes chatIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-.skill-bar-fill::after {
-  content: '';
-  position: absolute;
-  right: 0; top: 50%;
-  transform: translateY(-50%);
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: #a855f7;
-  box-shadow: 0 0 8px #a855f7, 0 0 16px rgba(168, 85, 247, 0.4);
+@keyframes chatPanelIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes chatDot {
+  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+  30%           { opacity: 1;    transform: translateY(-3px); }
+}
+@keyframes chatHalo {
+  0%   { opacity: 0.55; transform: scale(1); }
+  70%  { opacity: 0;    transform: scale(1.7); }
+  100% { opacity: 0;    transform: scale(1.7); }
 }
 
-/* ─── Accessibility: respect reduced-motion preference ─────────────── */
+.chat-msg   { animation: chatIn 0.32s var(--ease-out) both; }
+.chat-panel { animation: chatPanelIn 0.28s var(--ease-out) both; }
+.chat-dot   { animation: chatDot 1.3s ease-in-out infinite; }
+.chat-dot:nth-child(2) { animation-delay: 0.16s; }
+.chat-dot:nth-child(3) { animation-delay: 0.32s; }
+.chat-halo  { animation: chatHalo 2.6s ease-out infinite; }
+
+/* ── Animation utilities (hero only) ─────────────────────────────────── */
+.animate-fade-in-up { animation: fadeInUp 0.7s var(--ease-out) forwards; }
+.animate-fade-in    { animation: fadeIn 0.7s ease forwards; }
+.animate-float      { animation: float 7s ease-in-out infinite; }
+.animate-blink      { animation: blink-cursor 1s step-end infinite; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   ACCESSIBILITY
+   ════════════════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -443,29 +677,43 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  html { scroll-behavior: auto; }
+  .grain { display: none; }
+  /* Reveal must never be the reason content is missing. */
+  .reveal { opacity: 1 !important; transform: none !important; }
 }
 
-/* ─── Accessibility: keyboard focus + skip link ────────────────────── */
 :focus-visible {
-  outline: 2px solid rgba(0, 245, 255, 0.75);
+  outline: 2px solid var(--accent-soft);
   outline-offset: 3px;
+  border-radius: var(--r-sm);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .skip-link {
   position: fixed;
-  top: -48px;
+  top: -56px;
   left: 16px;
   z-index: 100;
-  padding: 10px 20px;
-  background: #000d1a;
-  border: 1px solid #00f5ff;
-  color: #00f5ff;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  transition: top 0.2s;
+  padding: 11px 20px;
+  border-radius: var(--r-md);
+  background: var(--surface-3);
+  border: 1px solid var(--accent);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: var(--step-meta);
+  letter-spacing: 0.06em;
+  transition: top var(--dur-fast) var(--ease-out);
 }
-.skip-link:focus {
-  top: 12px;
-}
+.skip-link:focus { top: 14px; }

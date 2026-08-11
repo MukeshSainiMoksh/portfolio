@@ -1,9 +1,33 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CursorGlow from "@/components/layout/CursorGlow";
 import ScrollProgress from "@/components/layout/ScrollProgress";
+import SiteBackground from "@/components/layout/SiteBackground";
+
+/* Self-hosted at build time — no render-blocking request to fonts.googleapis.com */
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist",
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
+});
+
+/* Used for a single emphasis word in the hero. Italic only. */
+const instrument = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: "italic",
+  variable: "--font-instrument",
+  display: "swap",
+});
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 const TITLE = "Mukesh Kumar Saini — Software Engineer & AI Developer";
@@ -31,16 +55,38 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+export const viewport = {
+  themeColor: "#08080c",
+  colorScheme: "dark",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
-      <body>
+    <html
+      lang="en"
+      className={`${geist.variable} ${geistMono.variable} ${instrument.variable} scroll-smooth`}
+      suppressHydrationWarning
+    >
+      {/* Extensions (reader-mode, Grammarly, dark-mode forcers) add attributes
+          to <body> before React hydrates, which React reports as a mismatch.
+          The <html> tag already carries this for the same reason. */}
+      <body suppressHydrationWarning>
+        {/* .reveal starts hidden and is un-hidden by an IntersectionObserver.
+            Without JS that observer never runs, so un-hide everything. */}
+        <noscript>
+          <style>{`.reveal{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
         <a href="#home" className="skip-link">Skip to content</a>
+        {/* One fixed field under the whole document — every section is
+            transparent so the page reads as a single surface. */}
+        <SiteBackground />
         <ScrollProgress />
         <CursorGlow />
         <Navbar />
         <main>{children}</main>
         <Footer />
+        {/* Film grain — sits above everything, catches no pointer events */}
+        <div className="grain" aria-hidden="true" />
       </body>
     </html>
   );
