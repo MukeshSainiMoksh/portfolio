@@ -1,0 +1,73 @@
+# Render Blueprint — deploys the FastAPI backend on the free tier.
+# Connect the repo at https://dashboard.render.com → New → Blueprint, and
+# Render reads this file. Values marked sync:false are secrets you paste in
+# the dashboard; they never live in the repo.
+
+services:
+  - type: web
+    name: portfolio-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.9
+
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "False"
+
+      # Boot fails on defaults — paste real values in the dashboard.
+      - key: SECRET_KEY
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+
+      # Neon pooled connection string, postgresql+asyncpg:// scheme, with SSL.
+      - key: DATABASE_URL
+        sync: false
+
+      # JSON array; both Vercel frontends. Update after the first Vercel
+      # deploy when the real URLs are known.
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+      # Uploads must go to R2 — Render free has no persistent disk, so
+      # STORAGE_BACKEND=local would lose files on every deploy.
+      - key: STORAGE_BACKEND
+        value: s3
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ENDPOINT_URL
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_REGION
+        value: auto
+      - key: S3_PUBLIC_BASE_URL
+        sync: false
+
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+
+      # Optional — contact-form notifications (Gmail App Password).
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: NOTIFY_EMAIL
+        sync: false
