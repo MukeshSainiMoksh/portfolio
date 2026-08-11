@@ -37,6 +37,8 @@ export interface PortfolioData {
     title: string;
     tagline: string | null;
     description: string | null;
+    role: string | null;
+    duration: string | null;
     technologies: string[] | null;
     features: string[] | null;
     live_url: string | null;
