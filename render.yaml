@@ -51,7 +51,7 @@ services:
       - key: S3_SECRET_ACCESS_KEY
         sync: false
       - key: S3_REGION
-        value: auto
+        value: ap-southeast-1
       - key: S3_PUBLIC_BASE_URL
         sync: false
 
